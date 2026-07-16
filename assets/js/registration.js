@@ -3,6 +3,8 @@
    ============================================ */
 
 const RegistrationPortal = (() => {
+  const STEP1_FIELD_IDS = ['signup-name', 'signup-email', 'signup-institution', 'signup-contact'];
+
   const state = {
     bound: false
   };
@@ -128,36 +130,53 @@ const RegistrationPortal = (() => {
       if (e.target && e.target.id === 'signup-password') {
         _updatePasswordMeter();
       }
-      if (e.target && ['signup-name', 'signup-email', 'signup-institution', 'signup-contact'].includes(e.target.id)) {
+      if (e.target && STEP1_FIELD_IDS.includes(e.target.id)) {
         _updateSummary();
       }
     });
 
-    document.body.addEventListener('click', async e => {
-      if (e.target && e.target.id === 'signup-close') {
-        close();
-      }
-      if (e.target && e.target.id === 'btn-open-signup') {
-        open();
-      }
-      if (e.target && e.target.id === 'signup-next-1') {
+    /* Intercept Enter in step-1 fields: advance to step 2 instead of submitting the form */
+    document.body.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      if (e.target && STEP1_FIELD_IDS.includes(e.target.id)) {
+        e.preventDefault();
         if (_validateStep1()) setStep(2);
       }
-      if (e.target && e.target.id === 'signup-back-2') {
-        setStep(1);
-      }
-      if (e.target && e.target.id === 'signup-toggle-password') {
-        _togglePasswordField('signup-password', e.target);
-      }
-      if (e.target && e.target.id === 'signup-toggle-confirm') {
-        _togglePasswordField('signup-confirm', e.target);
+    });
+
+    document.body.addEventListener('click', async e => {
+      try {
+        if (e.target && e.target.id === 'signup-close') {
+          close();
+        }
+        if (e.target && e.target.id === 'btn-open-signup') {
+          open();
+        }
+        if (e.target && e.target.id === 'signup-next-1') {
+          if (_validateStep1()) setStep(2);
+        }
+        if (e.target && e.target.id === 'signup-back-2') {
+          setStep(1);
+        }
+        if (e.target && e.target.id === 'signup-toggle-password') {
+          _togglePasswordField('signup-password', e.target);
+        }
+        if (e.target && e.target.id === 'signup-toggle-confirm') {
+          _togglePasswordField('signup-confirm', e.target);
+        }
+      } catch (err) {
+        console.error('[Registration] click handler error:', err);
       }
     });
 
     document.body.addEventListener('submit', async e => {
       if (e.target && e.target.id === 'signup-form') {
         e.preventDefault();
-        await _submit();
+        try {
+          await _submit();
+        } catch (err) {
+          console.error('[Registration] submit handler error:', err);
+        }
       }
     });
   }
@@ -197,11 +216,16 @@ const RegistrationPortal = (() => {
   }
 
   function _validateStep1() {
-    const name = document.getElementById('signup-name').value.trim();
-    const email = document.getElementById('signup-email').value.trim();
-    const institution = document.getElementById('signup-institution').value.trim();
-    const contact = document.getElementById('signup-contact').value.trim();
-    const error = document.getElementById('signup-error');
+    const nameEl = document.getElementById('signup-name');
+    const emailEl = document.getElementById('signup-email');
+    const institutionEl = document.getElementById('signup-institution');
+    const contactEl = document.getElementById('signup-contact');
+    if (!nameEl || !emailEl || !institutionEl || !contactEl) return false;
+
+    const name = nameEl.value.trim();
+    const email = emailEl.value.trim();
+    const institution = institutionEl.value.trim();
+    const contact = contactEl.value.trim();
 
     if (!name || !email || !institution || !contact) {
       _showError('Please complete all personal details');
@@ -211,15 +235,18 @@ const RegistrationPortal = (() => {
       _showError('Please enter a valid email address');
       return false;
     }
-    error.style.display = 'none';
+    _hideError();
     _updateSummary();
     return true;
   }
 
   function _validateStep2() {
-    const password = document.getElementById('signup-password').value;
-    const confirm = document.getElementById('signup-confirm').value;
-    const error = document.getElementById('signup-error');
+    const passwordEl = document.getElementById('signup-password');
+    const confirmEl = document.getElementById('signup-confirm');
+    if (!passwordEl || !confirmEl) return false;
+
+    const password = passwordEl.value;
+    const confirm = confirmEl.value;
     const strength = Auth.getPasswordStrength(password);
 
     if (!password || !confirm) {
@@ -235,7 +262,7 @@ const RegistrationPortal = (() => {
       return false;
     }
 
-    error.style.display = 'none';
+    _hideError();
     return true;
   }
 
@@ -251,11 +278,12 @@ const RegistrationPortal = (() => {
   }
 
   function _updatePasswordMeter() {
-    const password = document.getElementById('signup-password').value;
+    const passwordEl = document.getElementById('signup-password');
     const fill = document.getElementById('signup-password-fill');
     const text = document.getElementById('signup-password-text');
-    if (!fill || !text) return;
+    if (!passwordEl || !fill || !text) return;
 
+    const password = passwordEl.value;
     const strength = Auth.getPasswordStrength(password);
     const score = (() => {
       let points = 0;
@@ -284,7 +312,13 @@ const RegistrationPortal = (() => {
     const error = document.getElementById('signup-error');
     if (!error) return;
     error.textContent = message;
-    error.style.display = '';
+    error.style.display = 'block';
+  }
+
+  function _hideError() {
+    const error = document.getElementById('signup-error');
+    if (!error) return;
+    error.style.display = 'none';
   }
 
   function _togglePasswordField(fieldId, button) {
@@ -297,16 +331,16 @@ const RegistrationPortal = (() => {
   }
 
   async function _submit() {
-    const error = document.getElementById('signup-error');
+    if (!_validateStep1() || !_validateStep2()) {
+      return;
+    }
+
+    /* Validation passed — elements are guaranteed to exist */
     const name = document.getElementById('signup-name').value.trim();
     const email = document.getElementById('signup-email').value.trim();
     const institution = document.getElementById('signup-institution').value.trim();
     const contactNumber = document.getElementById('signup-contact').value.trim();
     const password = document.getElementById('signup-password').value;
-
-    if (!_validateStep1() || !_validateStep2()) {
-      return;
-    }
 
     const submitBtn = document.getElementById('signup-submit');
     if (submitBtn) {
@@ -339,7 +373,7 @@ const RegistrationPortal = (() => {
         if (child.id !== 'signup-success') child.style.display = 'none';
       });
     }
-    if (error) error.style.display = 'none';
+    _hideError();
     window.setTimeout(() => window.location.reload(), 1200);
   }
 
@@ -350,3 +384,6 @@ const RegistrationPortal = (() => {
 
 window.openSignupModal = () => RegistrationPortal.open();
 window.closeSignupModal = () => RegistrationPortal.close();
+
+/* Documented fallback alias referenced in index.html */
+window.Registration = RegistrationPortal;
