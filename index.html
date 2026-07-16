@@ -21,7 +21,7 @@
   <link rel="stylesheet" href="assets/css/animations.css">
   <link rel="stylesheet" href="assets/css/responsive.css">
 
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23c8960c'/><text x='16' y='22' text-anchor='middle' font-size='18' fill='white' font-family='sans-serif' font-weight='bold'>D</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23c8960c'/><text x='16' y='22' text-anchor='middle' f[...]>
 </head>
 <body>
 
@@ -183,7 +183,7 @@
       <div class="header__right">
         <div class="header__search"><input type="text" class="input input--search" id="global-search" placeholder="Search… (Ctrl+K)" autocomplete="off"></div>
         <button class="header__icon-btn" id="btn-notifications">🔔<span class="dot" id="notif-dot"></span></button>
-        <div class="notif-panel" id="notif-panel"><div class="notif-panel__header"><span class="notif-panel__title">Notifications</span></div><div class="notif-panel__list" id="notif-list"></div></div>
+        <div class="notif-panel" id="notif-panel"><div class="notif-panel__header"><span class="notif-panel__title">Notifications</span></div><div class="notif-panel__list" id="notif-list"></div>[...]
         <div class="header__user-info" id="header-user">
           <div style="text-align:right;"><div class="header__user-name" id="header-user-name">Admin</div><div class="header__user-role" id="header-user-role">Administrator</div></div>
           <div class="header__avatar" id="header-avatar">AD</div>
@@ -233,6 +233,27 @@
       inputPass.addEventListener('keydown', e => { if (e.key === 'Enter') _doLogin(); });
       inputUser.addEventListener('keydown', e => { if (e.key === 'Enter') inputPass.focus(); });
       togglePassword.addEventListener('click', _togglePasswordVisibility);
+      btnSignup?.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (typeof window.openSignupModal === 'function') {
+          window.openSignupModal();
+          return;
+        }
+
+        if (window.Registration && typeof window.Registration.open === 'function') {
+          window.Registration.open();
+          return;
+        }
+
+        if (window.Auth && typeof window.Auth.openSignupModal === 'function') {
+          window.Auth.openSignupModal();
+          return;
+        }
+
+        console.warn('Signup modal function not found. Check registration.js exports.');
+      });
       modalOverlay.addEventListener('click', e => {
         if (e.target === modalOverlay) closeLoginModal();
       });
