@@ -137,9 +137,6 @@ const RegistrationPortal = (() => {
       if (e.target && e.target.id === 'signup-close') {
         close();
       }
-      if (e.target && e.target.id === 'btn-open-signup') {
-        open();
-      }
       if (e.target && e.target.id === 'signup-next-1') {
         if (_validateStep1()) setStep(2);
       }

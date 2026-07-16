@@ -233,6 +233,7 @@
       inputPass.addEventListener('keydown', e => { if (e.key === 'Enter') _doLogin(); });
       inputUser.addEventListener('keydown', e => { if (e.key === 'Enter') inputPass.focus(); });
       togglePassword.addEventListener('click', _togglePasswordVisibility);
+      btnSignup.addEventListener('click', openSignupFromLogin);
       modalOverlay.addEventListener('click', e => {
         if (e.target === modalOverlay) closeLoginModal();
       });
@@ -249,6 +250,28 @@
 
       function closeLoginModal() {
         modalOverlay.classList.remove('login-modal-overlay--open');
+      }
+
+      function openSignupFromLogin(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (typeof window.openSignupModal === 'function') {
+          window.openSignupModal();
+          return;
+        }
+
+        if (window.Registration && typeof window.Registration.open === 'function') {
+          window.Registration.open();
+          return;
+        }
+
+        if (window.Auth && typeof window.Auth.openSignupModal === 'function') {
+          window.Auth.openSignupModal();
+          return;
+        }
+
+        console.warn('Signup modal function not found. Check registration.js exports.');
       }
 
       async function _doLogin() {
