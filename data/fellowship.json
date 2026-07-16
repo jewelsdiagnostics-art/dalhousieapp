@@ -1,0 +1,92 @@
+{
+  "programme": "Fellowship in General Adult Psychiatry (FGCP)",
+  "duration": "2 years",
+  "faculty": "GCPS Faculty of Psychiatry",
+  "entryRequirements": [
+    "Membership of GCPS (MGCP) or recognised equivalent qualification",
+    "Diploma in Project Design and Management (DPDM)",
+    "Post-membership work experience in Ghana (minimum 1 year, at least 6 months clinical practice in a psychiatric facility)",
+    "Registration with the Medical and Dental Council of Ghana as a specialist psychiatrist",
+    "Full abstract of dissertation proposal presented at selection interview",
+    "Pass selection interview"
+  ],
+  "learningOutcomes": [
+    "Exhibit in-depth evidence-based knowledge of General Adult Psychiatry and/or chosen subspecialty",
+    "Demonstrate skills, competencies, and attitudes to manage psychiatric problems",
+    "Recognise, assess, plan, and manage a person with psychiatric illness independently",
+    "Educate Specialists, Residents, and other medical personnel in Psychiatry",
+    "Plan and carry out research in mental health independently",
+    "Be a leader able to give sound evidence-based advice and direction",
+    "Be an effective communicator through media and other means",
+    "Complete a dissertation; share knowledge through conference presentations and peer-reviewed publications"
+  ],
+  "courses": [
+    { "id": "PSY-01", "title": "Psychiatry as a Holistic Discipline", "category": "Foundations", "description": "Biopsychosocial model, interdisciplinary collaboration, holistic patient care approaches." },
+    { "id": "PSY-02", "title": "Diagnostic Manuals & Classification", "category": "Foundations", "description": "DSM-5, ICD-11 — criticisms, limitations, updates and changes in psychiatric nosology." },
+    { "id": "PSY-03", "title": "Ethical & Legal Considerations", "category": "Foundations", "description": "Autonomy, beneficence, non-maleficence, justice; informed consent; capacity assessment; confidentiality; court reports." },
+    { "id": "PSY-04", "title": "Advanced Psychiatric Interviewing", "category": "Clinical Core", "description": "Phenomenology, transcultural considerations, case formulation models (biopsychosocial, cognitive-behavioral, psychodynamic)." },
+    { "id": "PSY-05", "title": "Psychiatric Rating Scales & Instruments", "category": "Clinical Core", "description": "Screening, diagnosis, and symptom severity instruments. Suicidality assessment, functioning/disability measures, quality of life." },
+    { "id": "PSY-06", "title": "Psychological Testing", "category": "Clinical Core", "description": "Purpose, administration, and interpretation of intelligence, personality, and neuropsychological testing." },
+    { "id": "PSY-07", "title": "Cultural Considerations in Psychiatry", "category": "Foundations", "description": "Cultural competence, addressing cultural bias, ethical considerations, working with interpreters." },
+    { "id": "PSY-08", "title": "Mental Health & Disability", "category": "Clinical Core", "description": "Phenomenology of specific disabilities, psychopathology in persons with disability, management approaches." },
+    { "id": "PSY-09", "title": "Psychopharmacology & Medication Management", "category": "Clinical Core", "description": "Psychotropic medications, adverse event management, drug-drug interactions, pharmacogenetics, AI in treatment." },
+    { "id": "PSY-10", "title": "Consultation-Liaison Psychiatry", "category": "Specialty", "description": "General hospital settings, psychiatric aspects of medical illness, pain management, palliative care." },
+    { "id": "PSY-11", "title": "Psychiatric Emergencies in Medical Settings", "category": "Specialty", "description": "Assessment and management of acute psychiatric crises in medical settings. Crisis stabilization." },
+    { "id": "PSY-12", "title": "Pain Management & Psychiatric Comorbidities", "category": "Specialty", "description": "Pain-psychiatric interface, assessment of comorbid conditions, multidisciplinary pain management." },
+    { "id": "PSY-13", "title": "Palliative Care & Psychological Support", "category": "Specialty", "description": "End-of-life care, psychological support frameworks, multidisciplinary palliative approaches." },
+    { "id": "PSY-14", "title": "Child & Adolescent Psychiatry", "category": "Specialty", "description": "ADHD, Autism Spectrum Disorders, disruptive behavior disorders, eating disorders, intellectual disability, infant/maternal mental health." },
+    { "id": "PSY-15", "title": "Addiction Psychiatry", "category": "Specialty", "description": "Neurobiology of addiction, alcohol/opioid use disorders, behavioral addictions, comorbid mental disorders, harm reduction." },
+    { "id": "PSY-16", "title": "Geriatric Psychiatry", "category": "Specialty", "description": "Mental health in the elderly, pharmacokinetic/dynamic considerations, polypharmacy, palliative and end-of-life care." },
+    { "id": "PSY-17", "title": "Forensic Psychiatry", "category": "Specialty", "description": "Interface of psychiatry and law, expert witness, criminal responsibility, competency, CRPD, M'Naghten/Durham rules." },
+    { "id": "PSY-18", "title": "Neuropsychiatry", "category": "Advanced", "description": "Neuropsychiatric examination, neurocognitive disorders, movement disorders, TBI sequelae, epilepsy and psychiatric comorbidities." },
+    { "id": "PSY-19", "title": "Sleep & Sleep Disorders", "category": "Clinical Core", "description": "Normal/abnormal sleep physiology, parasomnias, focal dyscognitive seizure disorders." },
+    { "id": "PSY-20", "title": "Psychiatric Genetics & Epigenetics", "category": "Advanced", "description": "Genetic contributions, epigenetic mechanisms, genetic testing and clinical applications in psychiatry." },
+    { "id": "PSY-21", "title": "Brain Imaging Techniques", "category": "Advanced", "description": "fMRI, PET, SPECT — neuroimaging biomarkers, treatment response imaging, AI advances." },
+    { "id": "PSY-22", "title": "Current Issues & Future Directions", "category": "Advanced", "description": "Precision psychiatry, AI/machine learning, TMS/brain stimulation, cultural psychiatry, global mental health." },
+    { "id": "PSY-23", "title": "Telepsychiatry & Digital Mental Health", "category": "Professional", "description": "Practice, ethics, legal aspects; platforms; remote assessment and diagnosis; teletherapy efficacy." },
+    { "id": "PSY-24", "title": "Global Mental Health Challenges", "category": "Professional", "description": "Disparities and access, humanitarian/refugee mental health, low-resource settings, collaborative partnerships." },
+    { "id": "PSY-25", "title": "Integrative & Holistic Psychiatry", "category": "Professional", "description": "Complementary/alternative medicine, mind-body interventions (yoga, meditation), nutritional psychiatry, exercise." },
+    { "id": "PSY-26", "title": "Advocacy & Policy Development", "category": "Professional", "description": "Mental health policy/legislation, stigma reduction, funding advocacy, patient/family advocacy." },
+    { "id": "PSY-27", "title": "Community & Rehabilitation Psychiatry", "category": "Professional", "description": "Psychiatric rehabilitation/recovery models, community services, homelessness, peer support." }
+  ],
+  "competencies": {
+    "year1": [
+      "Independently manage all general adult psychiatry conditions",
+      "Assess/evaluate childhood mental disorders using psychological tools; prescribe long-term management",
+      "Read neuroimages; request and understand neuropsychiatry investigations; determine long-term management",
+      "Appreciate law and mental health; assist court for determination of competence; uphold rights of persons with mental illness",
+      "Independently work in general health facility managing all mental ill-health and disability conditions",
+      "Diagnose and manage all forms of addictions; detoxify and transfer to rehabilitation",
+      "Understand different forms of community mental health",
+      "Understand and manage nuances of culture and diversity in mental health",
+      "Understand normal ageing and common mental conditions in the elderly",
+      "Understand normal sleep; identify and manage sleep abnormalities"
+    ],
+    "year2": [
+      "Undertake independent research and be able to publish",
+      "Adequate skills/competencies to work in managerial/administrative role",
+      "Establish new mental health facilities and units",
+      "Confidently undertake tele-psychiatry"
+    ]
+  },
+  "assessment": {
+    "formative": {
+      "weight": 30,
+      "components": [
+        { "name": "Case Based Discussion (CBD)", "marks": 10, "focus": "Pathophysiology, Differential Diagnosis, Investigation, Treatment, Feedback" },
+        { "name": "Direct Observation of Procedures & Skills (DOPS)", "marks": 5, "focus": "Steps of procedure, Competence at executing procedure, Feedback" },
+        { "name": "Management & Leadership Skills Observation", "marks": 10, "focus": "Time management, Conflict resolution, Moderation skills, Supervisory/monitoring, Public speaking/media engagement" },
+        { "name": "Research & Publication Skills", "marks": 5, "focus": "Research activity and publication output" }
+      ]
+    },
+    "final": {
+      "weight": 70,
+      "parts": [
+        { "part": 1, "name": "Written", "detail": "100 MCQs (1h 40m) + 2 essays including forensic/medical report (1h)" },
+        { "part": 2, "name": "Viva Voce", "detail": "10 questions, 5 minutes each — must pass at least 7" },
+        { "part": 3, "name": "Thesis Defence", "detail": "1.5 hours — panel of 3 Faculty Fellows plus 2 assessors" }
+      ]
+    }
+  },
+  "certification": "FGCP — Fellow of the Ghana College of Physicians and Surgeons"
+}

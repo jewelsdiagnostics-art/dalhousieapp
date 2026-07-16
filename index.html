@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dalhousie-GCPS Psychiatry Programme</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="assets/css/variables.css">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/layout.css">
+  <link rel="stylesheet" href="assets/css/login.css">
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+  <link rel="stylesheet" href="assets/css/curriculum.css">
+  <link rel="stylesheet" href="assets/css/tables.css">
+  <link rel="stylesheet" href="assets/css/timeline.css">
+  <link rel="stylesheet" href="assets/css/forms.css">
+  <link rel="stylesheet" href="assets/css/animations.css">
+  <link rel="stylesheet" href="assets/css/responsive.css">
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23c8960c'/><text x='16' y='22' text-anchor='middle' font-size='18' fill='white' font-family='sans-serif' font-weight='bold'>D</text></svg>">
+</head>
+<body>
+
+  <!-- ====== PUBLIC LANDING PAGE ====== -->
+  <div class="public-landing" id="public-landing">
+
+    <!-- Nav -->
+    <nav class="landing-nav">
+      <div class="landing-nav__logos">
+        <img src="dalhouselogo.jpg" alt="Dalhousie" class="landing-nav__logo" onerror="this.style.display='none'">
+        <div class="landing-nav__divider"></div>
+        <img src="gcps_logo.jpg" alt="GCPS" class="landing-nav__logo" onerror="this.style.display='none'">
+        <span class="landing-nav__title">Psychiatry Programme</span>
+      </div>
+      <div class="landing-nav__actions">
+        <button class="landing-btn-signin" onclick="openLoginModal()">Sign In</button>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="landing-hero">
+      <div class="landing-hero__content">
+        <div class="landing-hero__copy">
+          <span class="landing-hero__eyebrow">Psychiatry Programme Portal</span>
+          <div class="landing-hero__logos">
+            <img src="dalhouselogo.jpg" alt="Dalhousie University" class="landing-hero__logo" onerror="this.style.display='none'">
+            <span class="landing-hero__plus">+</span>
+            <img src="gcps_logo.jpg" alt="Ghana College of Physicians and Surgeons" class="landing-hero__logo" onerror="this.style.display='none'">
+          </div>
+          <h1>Dalhousie-GCPS Psychiatry Programme</h1>
+          <p class="landing-hero__lede">A modern management space for curriculum, faculty coordination, meetings, and programme administration.</p>
+          <div class="landing-hero__tags">
+            <span class="landing-hero__tag">Curriculum</span>
+            <span class="landing-hero__tag">Faculty</span>
+            <span class="landing-hero__tag">Meetings</span>
+            <span class="landing-hero__tag">Tracking</span>
+          </div>
+          <div class="landing-hero__cta">
+            <button class="landing-btn-signin" style="font-size:1rem;padding:0.8em 2em;" onclick="openLoginModal()">Sign In to Management Portal</button>
+          </div>
+        </div>
+
+        <div class="landing-hero__visual" aria-hidden="true">
+          <div class="landing-hero__orb landing-hero__orb--gold"></div>
+          <div class="landing-hero__orb landing-hero__orb--blue"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Compact Overview -->
+    <section class="landing-strip" aria-label="Programme overview">
+      <div class="landing-strip__grid">
+        <article class="landing-strip__card">
+          <div class="landing-strip__label">Programme</div>
+          <div class="landing-strip__value">Psychiatry training and administration portal</div>
+        </article>
+        <article class="landing-strip__card">
+          <div class="landing-strip__label">Membership</div>
+          <div class="landing-strip__value">3 years, MB.ChB + Primary Exam</div>
+        </article>
+        <article class="landing-strip__card">
+          <div class="landing-strip__label">Fellowship</div>
+          <div class="landing-strip__value">2 years, MGCP + DPDM</div>
+        </article>
+        <article class="landing-strip__card">
+          <div class="landing-strip__label">Contact</div>
+          <div class="landing-strip__value">psychiatry@gcps.edu.gh</div>
+        </article>
+      </div>
+      <div class="landing-strip__footer">
+        <span>Faculty of Psychiatry, GCPS</span>
+        <span>In collaboration with Dalhousie University</span>
+      </div>
+    </section>
+  </div>
+
+  <!-- ====== LOGIN MODAL ====== -->
+  <div class="login-modal-overlay" id="login-modal-overlay">
+    <div class="login-modal" role="dialog" aria-modal="true" aria-labelledby="login-title">
+      <button class="login-modal__close" onclick="closeLoginModal()">&times;</button>
+      <div class="login-modal__shell">
+        <section class="login-modal__panel login-modal__panel--info">
+          <span class="login-modal__eyebrow">Secure Access</span>
+          <h2 class="login-modal__headline">Welcome back.</h2>
+          <p class="login-modal__lead">
+            Sign in to manage curriculum records, meeting minutes, faculty resources, and programme administration in one place.
+          </p>
+          <div class="login-modal__feature-list">
+            <div class="login-modal__feature">
+              <span class="login-modal__feature-label">Portal</span>
+              <span class="login-modal__feature-value">Management dashboard</span>
+            </div>
+            <div class="login-modal__feature">
+              <span class="login-modal__feature-label">Access</span>
+              <span class="login-modal__feature-value">Role-based controls</span>
+            </div>
+            <div class="login-modal__feature">
+              <span class="login-modal__feature-label">Support</span>
+              <span class="login-modal__feature-value">Faculty and admin workflows</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="login-modal__panel login-modal__panel--form">
+          <div class="login-modal__header">
+            <div class="login-modal__title" id="login-title">Sign In</div>
+            <div class="login-modal__subtitle">Dalhousie-GCPS Psychiatry Programme Management</div>
+          </div>
+          <div class="login-modal__body">
+            <div class="login-modal__error" id="login-error" aria-live="polite">Invalid username or password</div>
+            <div class="form-group">
+              <label class="form-label" for="login-username">Username / Email</label>
+              <input type="text" class="input" id="login-username" placeholder="Enter username or email" autocomplete="username">
+            </div>
+            <div class="form-group">
+              <div class="login-modal__field-head">
+                <label class="form-label" for="login-password">Password</label>
+                <button type="button" class="login-modal__toggle" id="toggle-password" aria-pressed="false">Show</button>
+              </div>
+              <input type="password" class="input" id="login-password" placeholder="Enter password" autocomplete="current-password">
+            </div>
+            <button class="login-modal__btn" id="btn-login">Sign In</button>
+            <button type="button" class="login-modal__secondary-btn" id="btn-open-signup">Create New Faculty Account</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== SIGN UP MODAL ====== -->
+  <div class="signup-modal-overlay" id="signup-modal-overlay"></div>
+
+  <!-- ====== APP SHELL (hidden until login) ====== -->
+  <div class="app" id="app" style="display:none;">
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar__brand"><div class="sidebar__brand-icon">D</div><div class="sidebar__brand-text">Dalhousie-GCPS<br><small>Psychiatry Programme</small></div></div>
+      <nav class="sidebar__nav">
+        <div class="sidebar__section-label">Main</div>
+        <a class="nav-item nav-item--active" data-page="dashboard" href="#"><span class="nav-item__icon">📊</span><span class="nav-item__text">Dashboard</span></a>
+        <div class="sidebar__section-label">Management</div>
+        <a class="nav-item" data-page="membership" href="#"><span class="nav-item__icon">📘</span><span class="nav-item__text">Membership Curriculum</span></a>
+        <a class="nav-item" data-page="fellowship" href="#"><span class="nav-item__icon">🎓</span><span class="nav-item__text">Fellowship Curriculum</span></a>
+        <a class="nav-item" data-page="tracker" href="#"><span class="nav-item__icon">📈</span><span class="nav-item__text">Progress Tracker</span></a>
+        <div class="sidebar__section-label">Communication</div>
+        <a class="nav-item" data-page="meetings" href="#"><span class="nav-item__icon">📋</span><span class="nav-item__text">Meetings &amp; Minutes</span></a>
+        <a class="nav-item" data-page="faculty" href="#"><span class="nav-item__icon">👨‍🏫</span><span class="nav-item__text">Faculty Directory</span></a>
+        <a class="nav-item" data-page="resources" href="#"><span class="nav-item__icon">📁</span><span class="nav-item__text">Resources</span></a>
+        <div class="sidebar__section-label" style="margin-top:var(--space-6);" id="admin-section-label">Administration</div>
+        <a class="nav-item" data-page="users" href="#" id="nav-users"><span class="nav-item__icon">👤</span><span class="nav-item__text">User Management</span></a>
+      </nav>
+      <div class="sidebar__footer"><a class="nav-item" id="btn-theme" href="#"><span class="nav-item__icon" id="theme-icon">🌙</span><span class="nav-item__text">Toggle Theme</span></a></div>
+    </aside>
+
+    <div class="sidebar__overlay" id="sidebar-overlay"></div>
+
+    <header class="header">
+      <div class="header__left"><button class="header__hamburger" id="btn-hamburger">☰</button><div class="header__breadcrumb">Home / <span id="breadcrumb-current">Dashboard</span></div></div>
+      <div class="header__right">
+        <div class="header__search"><input type="text" class="input input--search" id="global-search" placeholder="Search… (Ctrl+K)" autocomplete="off"></div>
+        <button class="header__icon-btn" id="btn-notifications">🔔<span class="dot" id="notif-dot"></span></button>
+        <div class="notif-panel" id="notif-panel"><div class="notif-panel__header"><span class="notif-panel__title">Notifications</span></div><div class="notif-panel__list" id="notif-list"></div></div>
+        <div class="header__user-info" id="header-user">
+          <div style="text-align:right;"><div class="header__user-name" id="header-user-name">Admin</div><div class="header__user-role" id="header-user-role">Administrator</div></div>
+          <div class="header__avatar" id="header-avatar">AD</div>
+        </div>
+        <button class="header__logout-btn" id="btn-logout">↪</button>
+      </div>
+    </header>
+
+    <main class="main" id="main-content"><div style="display:flex;align-items:center;justify-content:center;min-height:400px;"><div class="spinner"></div></div></main>
+  </div>
+
+  <!-- ====== SCRIPTS ====== -->
+  <script src="assets/js/tutorial-catalog.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/registration.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/sidebar.js"></script>
+  <script src="assets/js/theme.js"></script>
+  <script src="assets/js/search.js"></script>
+  <script src="assets/js/notifications.js"></script>
+  <script src="assets/js/csv-import.js"></script>
+  <script src="assets/js/dashboard.js"></script>
+  <script src="assets/js/pages/membership.js"></script>
+  <script src="assets/js/pages/fellowship.js"></script>
+  <script src="assets/js/pages/meetings.js"></script>
+  <script src="assets/js/pages/tracker.js"></script>
+  <script src="assets/js/pages/faculty.js"></script>
+  <script src="assets/js/pages/resources.js"></script>
+  <script src="assets/js/pages/users.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const landing = document.getElementById('public-landing');
+      const modalOverlay = document.getElementById('login-modal-overlay');
+      const app = document.getElementById('app');
+      const error = document.getElementById('login-error');
+      const btnLogin = document.getElementById('btn-login');
+      const inputUser = document.getElementById('login-username');
+      const inputPass = document.getElementById('login-password');
+      const togglePassword = document.getElementById('toggle-password');
+      const btnSignup = document.getElementById('btn-open-signup');
+
+      // Already logged in? Skip landing
+      if (Auth.isLoggedIn()) { _showApp(); return; }
+
+      btnLogin.addEventListener('click', _doLogin);
+      inputPass.addEventListener('keydown', e => { if (e.key === 'Enter') _doLogin(); });
+      inputUser.addEventListener('keydown', e => { if (e.key === 'Enter') inputPass.focus(); });
+      togglePassword.addEventListener('click', _togglePasswordVisibility);
+      modalOverlay.addEventListener('click', e => {
+        if (e.target === modalOverlay) closeLoginModal();
+      });
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeLoginModal();
+      });
+      window.openLoginModal = openLoginModal;
+      window.closeLoginModal = closeLoginModal;
+
+      function openLoginModal() {
+        modalOverlay.classList.add('login-modal-overlay--open');
+        window.requestAnimationFrame(() => inputUser.focus());
+      }
+
+      function closeLoginModal() {
+        modalOverlay.classList.remove('login-modal-overlay--open');
+      }
+
+      async function _doLogin() {
+        const username = inputUser.value.trim();
+        const password = inputPass.value.trim();
+        if (!username || !password) {
+          error.textContent = 'Please enter both username and password';
+          error.classList.add('login-modal__error--visible');
+          return;
+        }
+        const result = await Auth.login(username, password);
+        if (result.success) {
+          error.classList.remove('login-modal__error--visible');
+          _showApp();
+        } else {
+          error.textContent = result.error;
+          error.classList.add('login-modal__error--visible');
+          inputPass.value = '';
+        }
+      }
+
+      function _togglePasswordVisibility() {
+        const isHidden = inputPass.type === 'password';
+        inputPass.type = isHidden ? 'text' : 'password';
+        togglePassword.textContent = isHidden ? 'Hide' : 'Show';
+        togglePassword.setAttribute('aria-pressed', String(isHidden));
+        inputPass.focus();
+      }
+
+      function _showApp() {
+        landing.classList.add('public-landing--hidden');
+        closeLoginModal();
+        app.style.display = '';
+
+        const user = Auth.currentUser();
+        if (user) {
+          document.getElementById('header-user-name').textContent = user.name || user.username;
+          document.getElementById('header-user-role').textContent = user.role === 'admin' ? 'Administrator' : 'Faculty';
+          document.getElementById('header-avatar').textContent = (user.name || user.username).charAt(0).toUpperCase();
+        }
+        if (!Auth.isAdmin()) {
+          document.getElementById('admin-section-label').style.display = 'none';
+          document.getElementById('nav-users').style.display = 'none';
+        }
+        document.getElementById('btn-logout').addEventListener('click', () => { Auth.logout(); location.reload(); });
+        App.init();
+      }
+    });
+  </script>
+</body>
+</html>

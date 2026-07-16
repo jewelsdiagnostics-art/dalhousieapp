@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faculty Directory — Dalhousie-GCPS Psychiatry Programme</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/variables.css">
+  <link rel="stylesheet" href="../assets/css/base.css">
+  <link rel="stylesheet" href="../assets/css/layout.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/curriculum.css">
+  <link rel="stylesheet" href="../assets/css/tables.css">
+  <link rel="stylesheet" href="../assets/css/timeline.css">
+  <link rel="stylesheet" href="../assets/css/forms.css">
+  <link rel="stylesheet" href="../assets/css/animations.css">
+  <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body>
+  <div class="app" id="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar__brand"><div class="sidebar__brand-icon">D</div><div class="sidebar__brand-text">Dalhousie-GCPS<br><small>Psychiatry Programme</small></div></div>
+      <nav class="sidebar__nav">
+        <div class="sidebar__section-label">Main</div>
+        <a class="nav-item" data-page="dashboard" href="../index.html"><span class="nav-item__icon">📊</span><span class="nav-item__text">Dashboard</span></a>
+        <div class="sidebar__section-label">Management</div>
+        <a class="nav-item" data-page="membership" href="membership.html"><span class="nav-item__icon">👥</span><span class="nav-item__text">Membership</span></a>
+        <a class="nav-item" data-page="fellowship" href="fellowship.html"><span class="nav-item__icon">📘</span><span class="nav-item__text">Fellowship Curriculum</span></a>
+        <a class="nav-item" data-page="tracker" href="tracker.html"><span class="nav-item__icon">📈</span><span class="nav-item__text">Progress Tracker</span></a>
+        <div class="sidebar__section-label">Communication</div>
+        <a class="nav-item" data-page="meetings" href="meetings.html"><span class="nav-item__icon">📋</span><span class="nav-item__text">Meetings</span></a>
+        <a class="nav-item nav-item--active" data-page="faculty" href="#"><span class="nav-item__icon">👨‍🏫</span><span class="nav-item__text">Faculty Directory</span></a>
+        <a class="nav-item" data-page="resources" href="resources.html"><span class="nav-item__icon">📁</span><span class="nav-item__text">Resources</span></a>
+      </nav>
+      <div class="sidebar__footer"><a class="nav-item" id="btn-theme" href="#"><span class="nav-item__icon" id="theme-icon">🌙</span><span class="nav-item__text">Toggle Theme</span></a></div>
+    </aside>
+    <div class="sidebar__overlay" id="sidebar-overlay"></div>
+    <header class="header">
+      <div class="header__left"><button class="header__hamburger" id="btn-hamburger">☰</button><div class="header__breadcrumb">Home / <span id="breadcrumb-current">Faculty Directory</span></div></div>
+      <div class="header__right">
+        <div class="header__search"><input type="text" class="input input--search" id="global-search" placeholder="Search…" autocomplete="off"></div>
+        <button class="header__icon-btn" id="btn-notifications">🔔<span class="dot" id="notif-dot"></span></button>
+        <div class="notif-panel" id="notif-panel"><div class="notif-panel__header"><span class="notif-panel__title">Notifications</span></div><div class="notif-panel__list" id="notif-list"></div></div>
+        <div class="header__avatar">AD</div>
+      </div>
+    </header>
+    <main class="main" id="main-content"><div class="spinner" style="margin:4rem auto;"></div></main>
+  </div>
+  <script src="../assets/js/app.js"></script>
+  <script src="../assets/js/sidebar.js"></script>
+  <script src="../assets/js/theme.js"></script>
+  <script src="../assets/js/search.js"></script>
+  <script src="../assets/js/notifications.js"></script>
+  <script src="../assets/js/csv-import.js"></script>
+  <script src="../assets/js/dashboard.js"></script>
+  <script src="../assets/js/pages/membership.js"></script>
+  <script src="../assets/js/pages/fellowship.js"></script>
+  <script src="../assets/js/pages/meetings.js"></script>
+  <script src="../assets/js/pages/tracker.js"></script>
+  <script src="../assets/js/pages/faculty.js"></script>
+  <script src="../assets/js/pages/resources.js"></script>
+  <script>document.addEventListener('DOMContentLoaded',()=>{setTimeout(()=>App.navigate('faculty'),100);});</script>
+</body>
+</html>

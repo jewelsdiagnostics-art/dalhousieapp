@@ -1,0 +1,268 @@
+/* ============================================
+   Forms — multi-section forms, wizards
+   ============================================ */
+
+.form-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+}
+
+.form-card__header {
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.form-card__body {
+  padding: var(--space-6);
+}
+
+.form-card__footer {
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-4);
+}
+
+.form-grid--2 { grid-template-columns: repeat(2, 1fr); }
+.form-grid--3 { grid-template-columns: repeat(3, 1fr); }
+
+.form-section {
+  margin-bottom: var(--space-6);
+}
+.form-section:last-child { margin-bottom: 0; }
+
+.form-section__title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-light);
+}
+
+/* Checkbox & Radio groups */
+.check-group,
+.radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.check-label,
+.radio-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.45em 0.9em;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.825rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+  color: var(--text-secondary);
+}
+.check-label:hover,
+.radio-label:hover {
+  border-color: var(--primary);
+  color: var(--text-primary);
+}
+.check-label input:checked + span,
+.radio-label input:checked + span {
+  color: var(--primary-dark);
+}
+.check-label:has(input:checked),
+.radio-label:has(input:checked) {
+  border-color: var(--primary);
+  background: var(--primary-bg);
+  color: var(--primary-dark);
+  font-weight: 500;
+}
+
+.check-label input,
+.radio-label input {
+  accent-color: var(--primary);
+}
+
+/* Toggle switch */
+.toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+.toggle__input { display: none; }
+.toggle__track {
+  width: 42px;
+  height: 24px;
+  border-radius: 12px;
+  background: var(--neutral-300);
+  position: relative;
+  transition: background var(--transition-fast);
+}
+.toggle__track::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+.toggle__input:checked + .toggle__track {
+  background: var(--accent);
+}
+.toggle__input:checked + .toggle__track::after {
+  transform: translateX(18px);
+}
+
+/* Upload zone */
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8) var(--space-6);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  background: var(--surface-hover);
+}
+.upload-zone:hover, .upload-zone--dragover {
+  border-color: var(--primary);
+  background: var(--primary-bg);
+}
+.upload-zone__icon {
+  font-size: 2.2rem;
+  margin-bottom: var(--space-3);
+  color: var(--text-muted);
+}
+.upload-zone__text {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+.upload-zone__hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: var(--space-1);
+}
+
+/* File list */
+.file-list {
+  list-style: none;
+  margin-top: var(--space-3);
+}
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-hover);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-1);
+  font-size: 0.825rem;
+}
+.file-item__name { flex: 1; }
+.file-item__size { color: var(--text-muted); font-size: 0.75rem; }
+.file-item__remove {
+  background: none;
+  border: none;
+  color: var(--error);
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+/* Wizard steps */
+.wizard-steps {
+  display: flex;
+  gap: 0;
+  margin-bottom: var(--space-6);
+}
+.wizard-step {
+  flex: 1;
+  text-align: center;
+  position: relative;
+  padding: var(--space-3) var(--space-2);
+  cursor: pointer;
+}
+.wizard-step::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--border);
+  z-index: 0;
+}
+.wizard-step:first-child::after { left: 50%; }
+.wizard-step:last-child::after { right: 50%; }
+
+.wizard-step__circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  position: relative;
+  z-index: 1;
+  color: var(--text-muted);
+  margin-bottom: var(--space-1);
+  transition: all var(--transition-fast);
+}
+.wizard-step--active .wizard-step__circle {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.wizard-step--done .wizard-step__circle {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.wizard-step__label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  position: relative;
+  z-index: 1;
+}
+.wizard-step--active .wizard-step__label { color: var(--primary); font-weight: 600; }
+.wizard-step--done .wizard-step__label { color: var(--accent); }
+
+/* Inline edit */
+.inline-edit {
+  cursor: pointer;
+  border-bottom: 1px dashed var(--text-muted);
+  padding: 1px 2px;
+  transition: all var(--transition-fast);
+}
+.inline-edit:hover {
+  background: var(--primary-bg);
+  border-color: var(--primary);
+}
+.inline-edit--editing {
+  border-bottom-color: var(--primary);
+  outline: none;
+}

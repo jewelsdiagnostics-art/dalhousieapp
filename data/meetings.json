@@ -1,0 +1,14 @@
+{
+  "meetings": [
+    { "id": "MTG-001", "date": "2026-07-15", "title": "Clinical Competency Committee Review", "type": "committee", "time": "10:00 AM", "location": "Boardroom A / Virtual", "status": "upcoming", "attendees": 8, "agenda": "Review fellow competencies and clinical performance evaluations." },
+    { "id": "MTG-002", "date": "2026-07-21", "title": "Fellowship Progress Review", "type": "review", "time": "2:00 PM", "location": "Virtual", "status": "upcoming", "attendees": 12, "agenda": "Quarterly review of fellowship programme progress and milestones." },
+    { "id": "MTG-003", "date": "2026-08-05", "title": "Curriculum Planning Session", "type": "planning", "time": "9:30 AM", "location": "Seminar Hall", "status": "upcoming", "attendees": 15, "agenda": "Annual curriculum review and planning for 2027 intake." },
+    { "id": "MTG-004", "date": "2026-08-19", "title": "Faculty Development Workshop", "type": "workshop", "time": "1:00 PM", "location": "Conference Centre", "status": "upcoming", "attendees": 20, "agenda": "Teaching skills enhancement for clinical supervisors." },
+    { "id": "MTG-005", "date": "2026-07-05", "title": "Monthly Programme Coordination", "type": "coordination", "time": "11:00 AM", "location": "Virtual", "status": "completed", "attendees": 10, "minutesAvailable": true },
+    { "id": "MTG-006", "date": "2026-06-28", "title": "Faculty Development Workshop", "type": "workshop", "time": "1:00 PM", "location": "Conference Centre", "status": "completed", "attendees": 20, "minutesAvailable": true },
+    { "id": "MTG-007", "date": "2026-06-18", "title": "Resident Assessment Panel", "type": "assessment", "time": "3:00 PM", "location": "Boardroom B", "status": "completed", "attendees": 6, "minutesAvailable": true },
+    { "id": "MTG-008", "date": "2026-06-10", "title": "Research Symposium", "type": "symposium", "time": "9:00 AM", "location": "Auditorium", "status": "completed", "attendees": 35, "minutesAvailable": true },
+    { "id": "MTG-009", "date": "2026-05-22", "title": "Examination Board Meeting", "type": "examination", "time": "10:00 AM", "location": "Boardroom A", "status": "completed", "attendees": 8, "minutesAvailable": true },
+    { "id": "MTG-010", "date": "2026-05-15", "title": "Clinical Supervision Review", "type": "review", "time": "2:00 PM", "location": "Virtual", "status": "completed", "attendees": 14, "minutesAvailable": true }
+  ]
+}

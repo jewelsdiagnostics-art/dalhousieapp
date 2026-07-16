@@ -1,0 +1,69 @@
+{
+  "programme": "Membership in Psychiatry (MGCP)",
+  "duration": "3 years",
+  "faculty": "GCPS Faculty of Psychiatry",
+  "entryRequirements": [
+    "Basic medical qualification (MB.ChB or equivalent)",
+    "Full registration with Medical and Dental Council of Ghana",
+    "Pass the Entry (Primary) Examination of GCPS, or obtain exemption via equivalent qualification",
+    "Pass interview conducted by the Faculty of Psychiatry"
+  ],
+  "year1": {
+    "title": "Basic Sciences & Foundations",
+    "subjects": [
+      "Neuroanatomy", "Neurophysiology", "Neurochemistry", "Neuropathology",
+      "Psychopharmacology", "Introduction to Psychology", "Introduction to Philosophy",
+      "Sociology of Behaviour", "Psychopathology", "Clinical Psychiatry I", "Transcultural Psychiatry"
+    ],
+    "rotations": [
+      { "name": "Didactic Lectures — Basic Sciences", "duration": "Block 1" },
+      { "name": "Didactic Lectures — Basic Psychiatry", "duration": "Block 2" },
+      { "name": "Clinical Psychiatry", "duration": "9 months" },
+      { "name": "Community & Rehabilitation Psychiatry", "duration": "1 month" },
+      { "name": "Annual Leave", "duration": "8 weeks" }
+    ]
+  },
+  "year2": {
+    "title": "Clinical Rotations & Specialty Exposure",
+    "lectures": "80 hours / 40 topics — 80% attendance required",
+    "rotations": [
+      { "name": "Child & Adolescent Psychiatry", "duration": "4 months" },
+      { "name": "Internal Medicine / Neurology & Neuroimaging", "duration": "11 weeks" },
+      { "name": "Neurosurgery", "duration": "3 weeks" },
+      { "name": "Emergency & Liaison Psychiatry", "duration": "1 month" },
+      { "name": "Clinical Psychology Skills (incl. testing)", "duration": "1 month" },
+      { "name": "Management & Administration", "duration": "2 weeks" }
+    ]
+  },
+  "year3": {
+    "title": "Advanced Clinical & Sub-Specialties",
+    "rotations": [
+      { "name": "General Adult Psychiatry", "duration": "4 months" },
+      { "name": "Forensic Psychiatry", "duration": "3 months" },
+      { "name": "Addiction Rehabilitation & Occupational Therapy", "duration": "6 weeks" },
+      { "name": "Geriatric & Long-Stay Psychiatry", "duration": "2 months" },
+      { "name": "Revision & Examinations", "duration": "2 weeks" }
+    ]
+  },
+  "assessment": {
+    "formative": {
+      "weight": 30,
+      "components": [
+        "Log Book / E-Portfolio", "Mini-CEX", "MCQs", "Essays", "ACE", "CBD",
+        "DOPS", "Case Presentation", "Journal Club", "Teaching Assessment",
+        "Leadership Observation", "Non-Clinical Skills Observation"
+      ]
+    },
+    "summative": {
+      "weight": 70,
+      "parts": [
+        { "name": "Theory Paper", "detail": "150 MCQ stems (best-of-five), 2 hours 10 minutes" },
+        { "name": "Clinical — Long Case", "detail": "45 min exam + 30 min with examiners (2 internal, 1 external)" },
+        { "name": "Clinical — OSCE", "detail": "Covers all 3-year curriculum including neurosciences, imaging" }
+      ],
+      "passMark": "50% minimum in each part",
+      "frequency": "Twice yearly — March and September"
+    }
+  },
+  "certification": "MGCP — Member of the Ghana College of Physicians"
+}
