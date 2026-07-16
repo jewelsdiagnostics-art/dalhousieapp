@@ -3,6 +3,8 @@
    ============================================ */
 
 const RegistrationPortal = (() => {
+  const STEP1_FIELD_IDS = ['signup-name', 'signup-email', 'signup-institution', 'signup-contact'];
+
   const state = {
     bound: false
   };
@@ -128,7 +130,7 @@ const RegistrationPortal = (() => {
       if (e.target && e.target.id === 'signup-password') {
         _updatePasswordMeter();
       }
-      if (e.target && ['signup-name', 'signup-email', 'signup-institution', 'signup-contact'].includes(e.target.id)) {
+      if (e.target && STEP1_FIELD_IDS.includes(e.target.id)) {
         _updateSummary();
       }
     });
@@ -136,8 +138,7 @@ const RegistrationPortal = (() => {
     /* Intercept Enter in step-1 fields: advance to step 2 instead of submitting the form */
     document.body.addEventListener('keydown', e => {
       if (e.key !== 'Enter') return;
-      const step1Fields = ['signup-name', 'signup-email', 'signup-institution', 'signup-contact'];
-      if (e.target && step1Fields.includes(e.target.id)) {
+      if (e.target && STEP1_FIELD_IDS.includes(e.target.id)) {
         e.preventDefault();
         if (_validateStep1()) setStep(2);
       }
@@ -330,21 +331,16 @@ const RegistrationPortal = (() => {
   }
 
   async function _submit() {
-    const nameEl = document.getElementById('signup-name');
-    const emailEl = document.getElementById('signup-email');
-    const institutionEl = document.getElementById('signup-institution');
-    const contactEl = document.getElementById('signup-contact');
-    const passwordEl = document.getElementById('signup-password');
-
     if (!_validateStep1() || !_validateStep2()) {
       return;
     }
 
-    const name = nameEl ? nameEl.value.trim() : '';
-    const email = emailEl ? emailEl.value.trim() : '';
-    const institution = institutionEl ? institutionEl.value.trim() : '';
-    const contactNumber = contactEl ? contactEl.value.trim() : '';
-    const password = passwordEl ? passwordEl.value : '';
+    /* Validation passed — elements are guaranteed to exist */
+    const name = document.getElementById('signup-name').value.trim();
+    const email = document.getElementById('signup-email').value.trim();
+    const institution = document.getElementById('signup-institution').value.trim();
+    const contactNumber = document.getElementById('signup-contact').value.trim();
+    const password = document.getElementById('signup-password').value;
 
     const submitBtn = document.getElementById('signup-submit');
     if (submitBtn) {
