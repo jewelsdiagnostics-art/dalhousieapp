@@ -24,6 +24,19 @@ const Auth = (() => {
       salt: DEFAULT_ADMIN_SALT,
       passwordHash: DEFAULT_ADMIN_HASH,
       sessionToken: ''
+    },
+    {
+      username: 'faculty',
+      email: 'faculty@dalhousie.app',
+      role: 'faculty',
+      name: 'Demo Faculty',
+      institution: 'GCPS',
+      contactNumber: '',
+      mainTopics: [],
+      tutorials: [],
+      salt: 'gcps-demo-salt',
+      passwordHash: '756a12b15ae0d07ce572861eb57d81327ee419705e53270dd600f8070688c761',
+      sessionToken: ''
     }
   ];
 
