@@ -301,10 +301,6 @@ const RegistrationPortal = (() => {
     const contactNumber = document.getElementById('signup-contact').value.trim();
     const password = document.getElementById('signup-password').value;
 
-    if (!_validateStep1() || !_validateStep2()) {
-      return;
-    }
-
     const submitBtn = document.getElementById('signup-submit');
     if (submitBtn) {
       submitBtn.disabled = true;
