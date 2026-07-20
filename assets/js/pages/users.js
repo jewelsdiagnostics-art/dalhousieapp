@@ -103,16 +103,16 @@ App.registerPage('users', () => {
       <!-- Reset password modal -->
       <div id="reset-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;" onclick="if(event.target===this)this.style.display='none'">
         <div class="card" style="width:380px;max-width:90vw;overflow:visible;" onclick="event.stopPropagation()">
-          <h3 style="margin-bottom:var(--space-3);">Reset Password</h3>
-          <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:var(--space-3);">Reset password for <strong id="reset-username-label"></strong></p>
+          <h3 style="margin-bottom:var(--space-3);">Send Password Reset Email</h3>
+          <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:var(--space-3);">Send a reset email for <strong id="reset-username-label"></strong></p>
           <div class="form-group">
             <label class="form-label">New Password</label>
-            <input type="password" class="input" id="reset-new-password" placeholder="Enter new password">
+            <input type="password" class="input" id="reset-new-password" placeholder="Enter a placeholder password">
           </div>
           <div id="reset-error" style="display:none;color:var(--error);font-size:0.8rem;margin-bottom:var(--space-2);"></div>
           <div style="display:flex;gap:var(--space-2);justify-content:flex-end;">
             <button class="btn btn--outline btn--sm" onclick="document.getElementById('reset-modal').style.display='none'">Cancel</button>
-            <button class="btn btn--primary btn--sm" onclick="UsersPage.resetPassword()">Save</button>
+            <button class="btn btn--primary btn--sm" onclick="UsersPage.resetPassword()">Send Email</button>
           </div>
         </div>
       </div>
@@ -204,7 +204,7 @@ const UsersPage = {
     const result = await Auth.resetPassword(this._resetTarget, newPass);
     if (result.success) {
       document.getElementById('reset-modal').style.display = 'none';
-      Notifications.toast('Password Reset', `Password for ${this._resetTarget} updated`, 'success');
+      Notifications.toast('Reset Email Sent', `Password reset email sent to ${this._resetTarget}`, 'success');
     } else {
       errEl.textContent = result.error;
       errEl.style.display = '';

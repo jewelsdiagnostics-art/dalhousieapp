@@ -72,6 +72,12 @@ Open `index.html` in any modern browser — no server, build step, or dependenci
 
 For the standalone pages, open any file under `pages/` directly.
 
+## Firebase Notes
+
+- The app now uses Firebase Auth and Firestore for sign-in, sign-up, and teaching profile storage.
+- Self-service sign-up creates faculty accounts only.
+- Create the first admin account in Firebase Auth manually before using the user management screen.
+
 ## Keyboard Shortcuts
 
 | Shortcut | Action |

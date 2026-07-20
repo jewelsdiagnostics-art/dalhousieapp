@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function hasUserDoc() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function userRole() {
+      return hasUserDoc() ? userDoc().role : null;
+    }
+
+    function isAdmin() {
+      return userRole() == "admin";
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+
+      allow create: if isOwner(userId)
+        && request.resource.data.uid == userId
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == "faculty"
+        && request.resource.data.user_status == "ACTIVE"
+        && request.resource.data.keys().hasOnly([
+          "uid",
+          "username",
+          "usernameLower",
+          "email",
+          "name",
+          "fullName",
+          "role",
+          "user_status",
+          "institution",
+          "contactNumber",
+          "mainTopics",
+          "tutorials",
+          "createdAt",
+          "updatedAt"
+        ]);
+
+      allow update: if isAdmin() || (
+        isOwner(userId)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.username == resource.data.username
+        && request.resource.data.usernameLower == resource.data.usernameLower
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.keys().hasOnly([
+          "uid",
+          "username",
+          "usernameLower",
+          "email",
+          "name",
+          "fullName",
+          "role",
+          "user_status",
+          "institution",
+          "contactNumber",
+          "mainTopics",
+          "tutorials",
+          "createdAt",
+          "updatedAt"
+        ])
+      );
+
+      allow delete: if isAdmin();
+    }
+  }
+}

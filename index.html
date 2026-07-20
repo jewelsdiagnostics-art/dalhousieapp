@@ -197,6 +197,10 @@
 
   <!-- ====== SCRIPTS ====== -->
   <script src="assets/js/tutorial-catalog.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+  <script src="assets/js/firebase-config.js"></script>
   <script src="assets/js/auth.js"></script>
   <script src="assets/js/registration.js"></script>
   <script src="assets/js/app.js"></script>
@@ -215,7 +219,7 @@
   <script src="assets/js/pages/users.js"></script>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const landing = document.getElementById('public-landing');
       const modalOverlay = document.getElementById('login-modal-overlay');
       const app = document.getElementById('app');
@@ -225,6 +229,10 @@
       const inputPass = document.getElementById('login-password');
       const togglePassword = document.getElementById('toggle-password');
       const btnSignup = document.getElementById('btn-open-signup');
+
+      if (Auth && typeof Auth.ready === 'function') {
+        await Auth.ready();
+      }
 
       // Already logged in? Skip landing
       if (Auth.isLoggedIn()) { _showApp(); return; }

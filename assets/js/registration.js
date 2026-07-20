@@ -138,7 +138,8 @@ const RegistrationPortal = (() => {
         close();
       }
       if (e.target && e.target.id === 'signup-next-1') {
-        if (_validateStep1()) setStep(2);
+        _updateSummary();
+        setStep(2);
       }
       if (e.target && e.target.id === 'signup-back-2') {
         setStep(1);
@@ -326,6 +327,25 @@ const RegistrationPortal = (() => {
 
     const success = document.getElementById('signup-success');
     if (success) success.classList.add('signup-modal__success--visible');
+    if (success && result.user) {
+      const details = [
+        result.user.username ? `<div><strong>Username:</strong> ${result.user.username}</div>` : '',
+        result.user.email ? `<div><strong>Email:</strong> ${result.user.email}</div>` : ''
+      ].filter(Boolean).join('');
+      const tempPassword = result.generatedPassword && result.tempPassword
+        ? `<p style="margin-top:0.75rem;padding:0.8rem 1rem;border-radius:12px;background:var(--primary-bg);border:1px solid var(--primary);color:var(--text-primary);">
+            A temporary password was generated because the form was submitted without one:
+            <strong style="display:block;margin-top:0.35rem;">${result.tempPassword}</strong>
+          </p>`
+        : '';
+      success.insertAdjacentHTML('beforeend', `
+        <div style="margin-top:0.9rem;padding:0.8rem 1rem;border-radius:12px;background:var(--surface);border:1px solid var(--border-light);text-align:left;">
+          <div style="font-weight:700;margin-bottom:0.35rem;">Login details</div>
+          <div style="display:grid;gap:0.25rem;color:var(--text-secondary);font-size:0.9rem;">${details}</div>
+        </div>
+        ${tempPassword}
+      `);
+    }
     const body = document.querySelector('.signup-modal__body');
     if (body) {
       [...body.children].forEach(child => {

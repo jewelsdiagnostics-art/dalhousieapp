@@ -1,74 +1,42 @@
 /* ============================================
-   auth.js â€” Login, session, role-based access, user management
+   auth.js — Firebase-backed login, session, role-based access, user management
    ============================================ */
 
 const Auth = (() => {
-  const SESSION_KEY = 'gcps_auth_session';
-  const USERS_KEY = 'gcps_auth_users';
-  const DEFAULT_ADMIN_SALT = 'gcps-admin-salt';
-  const DEFAULT_ADMIN_HASH = 'b2006f3a3f83ea4a58ca5dd5e641b3cb72ed6f55ebafe85b055d37182fd2aa9e';
-
+  const USERS_COLLECTION = 'users';
   let _currentUser = null;
+  let _users = [];
+  let _bootstrapPromise = null;
+  let _readyResolve = null;
+  let _readySettled = false;
+  let _authBound = false;
 
-  /* ---- Default users ---- */
-  const DEFAULT_USERS = [
-    {
-      username: 'admin',
-      email: 'admin',
-      role: 'admin',
-      name: 'Administrator',
-      institution: 'GCPS',
-      contactNumber: '',
-      mainTopics: [],
-      tutorials: [],
-      salt: DEFAULT_ADMIN_SALT,
-      passwordHash: DEFAULT_ADMIN_HASH,
-      sessionToken: ''
-    },
-    {
-      username: 'faculty',
-      email: 'faculty@dalhousie.app',
-      role: 'faculty',
-      name: 'Demo Faculty',
-      institution: 'GCPS',
-      contactNumber: '',
-      mainTopics: [],
-      tutorials: [],
-      salt: 'gcps-demo-salt',
-      passwordHash: '756a12b15ae0d07ce572861eb57d81327ee419705e53270dd600f8070688c761',
-      sessionToken: ''
-    }
-  ];
+  const _readyPromise = new Promise(resolve => {
+    _readyResolve = resolve;
+  });
 
-  /* ---- Helpers ---- */
+  function _hasFirebase() {
+    return !!(window.firebase && window.FirebaseAuth && window.FirebaseDb && window.FirebaseConfig);
+  }
+
+  function _auth() {
+    return window.FirebaseAuth;
+  }
+
+  function _db() {
+    return window.FirebaseDb;
+  }
+
   function _normalize(value) {
     return String(value || '').trim().toLowerCase();
   }
 
-  function _loadUsers() {
-    try { return JSON.parse(localStorage.getItem(USERS_KEY)) || []; }
-    catch (e) { return []; }
-  }
-
-  function _saveUsers(users) {
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
-  }
-
-  function _loadSession() {
-    try { return JSON.parse(localStorage.getItem(SESSION_KEY)); }
-    catch (e) { return null; }
-  }
-
-  function _saveSession(user) {
-    localStorage.setItem(SESSION_KEY, JSON.stringify({
-      username: user.username,
-      sessionToken: user.sessionToken
-    }));
-  }
-
-  function _clearSession() {
-    localStorage.removeItem(SESSION_KEY);
-    _currentUser = null;
+  function _slugify(value) {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
   }
 
   function _uuid() {
@@ -76,40 +44,12 @@ const Auth = (() => {
     return `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
   }
 
-  function _newSalt() {
-    return _uuid().replace(/-/g, '');
+  function _generateTempPassword() {
+    return `Gcps!${_uuid().replace(/-/g, '').slice(0, 10)}A1`;
   }
 
-  function _newSessionToken() {
-    return _uuid().replace(/-/g, '');
-  }
-
-  async function _hashPassword(password, salt) {
-    const data = new TextEncoder().encode(`${salt}::${password}`);
-    const digest = await crypto.subtle.digest('SHA-256', data);
-    return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
-  }
-
-  function _ensureUserShape(user) {
-    if (!user) return user;
-    const username = user.username || user.email || '';
-    const email = user.email || user.username || '';
-    const curriculumDefaults = (typeof TutorialCatalog !== 'undefined' && TutorialCatalog.allSelectionIds)
-      ? TutorialCatalog.allSelectionIds()
-      : { groups: [], tutorials: [] };
-    const mainTopics = Array.isArray(user.mainTopics) ? user.mainTopics : [];
-    const tutorials = Array.isArray(user.tutorials) ? user.tutorials : [];
-    const shouldDefaultCurriculum = (user.role || 'faculty') === 'faculty';
-    return {
-      ...user,
-      username,
-      email,
-      name: user.name || username,
-      institution: user.institution || '',
-      contactNumber: user.contactNumber || '',
-      mainTopics: mainTopics.length || !shouldDefaultCurriculum ? mainTopics : curriculumDefaults.groups,
-      tutorials: tutorials.length || !shouldDefaultCurriculum ? tutorials : curriculumDefaults.tutorials
-    };
+  function _validEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
   }
 
   function _validatePasswordStrength(password) {
@@ -126,262 +66,433 @@ const Auth = (() => {
     };
   }
 
-  async function _upgradeLegacyUser(user, plainPassword) {
-    const salt = _newSalt();
-    user.salt = salt;
-    user.passwordHash = await _hashPassword(plainPassword, salt);
-    delete user.password;
-    return user;
+  function _curriculumDefaults() {
+    return (typeof TutorialCatalog !== 'undefined' && TutorialCatalog.allSelectionIds)
+      ? TutorialCatalog.allSelectionIds()
+      : { groups: [], tutorials: [] };
   }
 
-  function _persistUserUpdate(updatedUser) {
-    const users = _loadUsers().map(_ensureUserShape);
-    const idx = users.findIndex(u => _normalize(u.username) === _normalize(updatedUser.username));
-    if (idx >= 0) {
-      users[idx] = { ...users[idx], ...updatedUser };
-    } else {
-      users.push(updatedUser);
-    }
-    _saveUsers(users);
+  function _usersRef() {
+    return _db().collection(USERS_COLLECTION);
   }
 
-  /* ---- Init ---- */
-  function init() {
-    let users = _loadUsers().map(_ensureUserShape);
-    if (users.length === 0) {
-      users = DEFAULT_USERS.map(_ensureUserShape);
-      _saveUsers(users);
+  function _userDoc(uid) {
+    return _usersRef().doc(uid);
+  }
+
+  function _profileFromDoc(docSnap) {
+    if (!docSnap || !docSnap.exists) return null;
+    const data = docSnap.data() || {};
+    const username = data.username || _slugify(data.email || '');
+    const fullName = data.fullName || data.name || username;
+    return {
+      uid: data.uid || docSnap.id,
+      username,
+      usernameLower: _normalize(data.usernameLower || username),
+      email: data.email || '',
+      name: fullName,
+      fullName,
+      role: data.role || 'faculty',
+      user_status: data.user_status || 'ACTIVE',
+      institution: data.institution || '',
+      contactNumber: data.contactNumber || '',
+      mainTopics: Array.isArray(data.mainTopics) ? data.mainTopics : [],
+      tutorials: Array.isArray(data.tutorials) ? data.tutorials : [],
+      createdAt: data.createdAt || null,
+      updatedAt: data.updatedAt || null
+    };
+  }
+
+  async function _loadProfileByUid(uid) {
+    const snap = await _userDoc(uid).get();
+    return _profileFromDoc(snap);
+  }
+
+  async function _loadProfileByUsername(username) {
+    const lookup = _normalize(username);
+    if (!lookup) return null;
+    const snap = await _usersRef().where('usernameLower', '==', lookup).limit(1).get();
+    if (snap.empty) return null;
+    return _profileFromDoc(snap.docs[0]);
+  }
+
+  async function _loadAllProfiles() {
+    const snap = await _usersRef().get();
+    return snap.docs.map(_profileFromDoc).filter(Boolean);
+  }
+
+  async function _saveProfile(profile) {
+    const payload = {
+      uid: profile.uid,
+      username: profile.username || _slugify(profile.email || ''),
+      usernameLower: _normalize(profile.usernameLower || profile.username || _slugify(profile.email || '')),
+      email: profile.email || '',
+      name: profile.name || profile.fullName || profile.username || '',
+      fullName: profile.fullName || profile.name || profile.username || '',
+      role: profile.role || 'faculty',
+      user_status: profile.user_status || 'ACTIVE',
+      institution: profile.institution || '',
+      contactNumber: profile.contactNumber || '',
+      mainTopics: Array.isArray(profile.mainTopics) ? profile.mainTopics : [],
+      tutorials: Array.isArray(profile.tutorials) ? profile.tutorials : [],
+      createdAt: profile.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    await _userDoc(payload.uid).set(payload, { merge: true });
+    return _profileFromDoc({ exists: true, id: payload.uid, data: () => payload });
+  }
+
+  async function _disableProfile(uid) {
+    await _userDoc(uid).set({
+      user_status: 'DELETED',
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+  }
+
+  function _secondaryAuth() {
+    const appName = '__dalhousie_secondary__';
+    const existing = firebase.apps.find(app => app.name === appName);
+    const app = existing || firebase.initializeApp(window.FirebaseConfig, appName);
+    return firebase.auth(app);
+  }
+
+  async function _refreshUsersCache() {
+    if (isAdmin()) {
+      _users = (await _loadAllProfiles()).filter(user => _normalize(user.user_status) !== 'deleted');
+      return _users;
+    }
+    _users = _currentUser ? [_currentUser] : [];
+    return _users;
+  }
+
+  async function _hydrateFirebaseUser(user) {
+    if (!user) {
+      _currentUser = null;
+      _users = [];
+      return null;
     }
 
-    const session = _loadSession();
-    if (session) {
-      const user = users.find(u =>
-        _normalize(u.username) === _normalize(session.username) &&
-        (session.sessionToken ? u.sessionToken === session.sessionToken : true)
-      );
-      if (user) {
-        _currentUser = user;
-      } else {
-        _clearSession();
+    let profile = await _loadProfileByUid(user.uid);
+    if (!profile) {
+      profile = await _saveProfile({
+        uid: user.uid,
+        username: _slugify(user.displayName || user.email || user.uid),
+        usernameLower: _normalize(_slugify(user.displayName || user.email || user.uid)),
+        email: user.email || '',
+        name: user.displayName || _slugify(user.email || user.uid),
+        fullName: user.displayName || _slugify(user.email || user.uid),
+        role: 'faculty',
+        user_status: 'ACTIVE',
+        institution: '',
+        contactNumber: '',
+        mainTopics: _curriculumDefaults().groups,
+        tutorials: _curriculumDefaults().tutorials
+      });
+    }
+
+    if (_normalize(profile.user_status) === 'deleted') {
+      await _auth().signOut();
+      throw new Error('This account has been disabled');
+    }
+
+    _currentUser = profile;
+    await _refreshUsersCache();
+    return profile;
+  }
+
+  async function _bootstrap() {
+    if (_bootstrapPromise) return _bootstrapPromise;
+
+    _bootstrapPromise = (async () => {
+      if (!_hasFirebase()) {
+        console.warn('Firebase is not available yet.');
+        return;
       }
-    }
+
+      await _auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+      if (!_authBound) {
+        _authBound = true;
+        _auth().onAuthStateChanged(async user => {
+          try {
+            if (user) {
+              await _hydrateFirebaseUser(user);
+            } else {
+              _currentUser = null;
+              _users = [];
+            }
+          } catch (error) {
+            console.warn(error.message || error);
+            _currentUser = null;
+            _users = [];
+          } finally {
+            if (!_readySettled) {
+              _readySettled = true;
+              _readyResolve();
+            }
+          }
+        });
+      }
+
+      const current = _auth().currentUser;
+      if (current) {
+        try {
+          await _hydrateFirebaseUser(current);
+        } catch (error) {
+          console.warn(error.message || error);
+        }
+      }
+
+      if (!_readySettled) {
+        _readySettled = true;
+        _readyResolve();
+      }
+    })();
+
+    return _bootstrapPromise;
   }
 
-  /* ---- Login ---- */
+  async function init() {
+    return _bootstrap();
+  }
+
+  async function ready() {
+    await _bootstrap();
+    return _readyPromise;
+  }
+
   async function login(identifier, password) {
-    const users = _loadUsers().map(_ensureUserShape);
-    const lookup = _normalize(identifier);
-    const user = users.find(u =>
-      _normalize(u.username) === lookup || _normalize(u.email) === lookup
-    );
-    if (!user) return { success: false, error: 'Invalid username or password' };
+    await ready();
 
-    let isMatch = false;
-    if (user.passwordHash && user.salt) {
-      const hashed = await _hashPassword(password, user.salt);
-      isMatch = hashed === user.passwordHash;
-    } else if (user.password) {
-      isMatch = user.password === password;
-      if (isMatch) {
-        await _upgradeLegacyUser(user, password);
-        _saveUsers(users.map(u => _normalize(u.username) === _normalize(user.username) ? user : u));
-      }
+    const loginName = String(identifier || '').trim();
+    const secret = String(password || '');
+    if (!loginName || !secret) {
+      return { success: false, error: 'Invalid username or password' };
     }
 
-    if (!isMatch) return { success: false, error: 'Invalid username or password' };
+    let email = loginName;
+    if (!loginName.includes('@')) {
+      const profile = await _loadProfileByUsername(loginName);
+      if (!profile || _normalize(profile.user_status) === 'deleted') {
+        return { success: false, error: 'Invalid username or password' };
+      }
+      email = profile.email;
+    }
 
-    user.sessionToken = _newSessionToken();
-    _currentUser = { ...user };
-    _persistUserUpdate(user);
-    _saveSession(user);
-    return { success: true, user: _currentUser };
+    try {
+      const credential = await _auth().signInWithEmailAndPassword(email, secret);
+      const user = credential && credential.user ? await _hydrateFirebaseUser(credential.user) : null;
+      if (!user) return { success: false, error: 'Invalid username or password' };
+      return { success: true, user };
+    } catch (error) {
+      return { success: false, error: 'Invalid username or password' };
+    }
   }
 
-  /* ---- Register self-service account ---- */
   async function registerAccount(payload) {
+    await ready();
+
     const rawFullName = String(payload.fullName || '').trim();
     const rawEmail = String(payload.email || '').trim();
     const rawInstitution = String(payload.institution || '').trim();
-    const rawContactNumber = String(payload.contactNumber || '').trim();
-    const password = String(payload.password || '');
-    const curriculumDefaults = (typeof TutorialCatalog !== 'undefined' && TutorialCatalog.allSelectionIds)
-      ? TutorialCatalog.allSelectionIds()
-      : { groups: [], tutorials: [] };
+    const rawContact = String(payload.contactNumber || '').trim();
+    const rawPassword = String(payload.password || '');
+    const username = _slugify(payload.username || rawFullName || rawEmail || `faculty-${Date.now()}`) || `faculty-${Date.now()}`;
+    const email = _validEmail(rawEmail) ? rawEmail : `${username}@dalhousie.app`;
+    const password = rawPassword || _generateTempPassword();
+    const strength = _validatePasswordStrength(password);
+    const selections = _curriculumDefaults();
     const selectedMainTopics = Array.isArray(payload.selectedMainTopics) && payload.selectedMainTopics.length
       ? payload.selectedMainTopics
-      : curriculumDefaults.groups;
+      : selections.groups;
     const selectedTutorials = Array.isArray(payload.selectedTutorials) && payload.selectedTutorials.length
       ? payload.selectedTutorials
-      : curriculumDefaults.tutorials;
+      : selections.tutorials;
 
-    const fallbackEmail = `faculty-${Date.now()}@dalhousie.app`;
-    const email = rawEmail || fallbackEmail;
-    const fullName = rawFullName || 'New Faculty';
-    const institution = rawInstitution || 'GCPS';
-    const contactNumber = rawContactNumber || '0000000000';
-    const safePassword = password || 'Faculty123!';
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return { success: false, error: 'Please enter a valid email address' };
-    }
-    const strength = _validatePasswordStrength(safePassword);
-    if (!strength.ok) return { success: false, error: strength.message };
-    const users = _loadUsers().map(_ensureUserShape);
-    const username = _normalize(email);
-    if (users.some(u => _normalize(u.username) === username || _normalize(u.email) === username)) {
-      return { success: false, error: 'An account already exists for that email address' };
+    if (!strength.ok) {
+      return { success: false, error: strength.message };
     }
 
-    const salt = _newSalt();
-    const passwordHash = await _hashPassword(safePassword, salt);
-    const sessionToken = _newSessionToken();
-    const newUser = {
-      username,
-      email,
-      name: fullName,
-      institution,
-      contactNumber,
-      role: 'faculty',
-      mainTopics: [...new Set(selectedMainTopics)],
-      tutorials: [...new Set(selectedTutorials)],
-      salt,
-      passwordHash,
-      sessionToken,
-      createdAt: new Date().toISOString()
-    };
-
-    users.push(newUser);
-    _saveUsers(users);
-    _currentUser = { ...newUser };
-    _saveSession(newUser);
-    return { success: true, user: _currentUser };
-  }
-
-  /* ---- Logout ---- */
-  function logout() {
-    _clearSession();
-  }
-
-  /* ---- Current user ---- */
-  function currentUser() { return _currentUser; }
-  function isLoggedIn() { return !!_currentUser; }
-  function isAdmin() { return _currentUser && _currentUser.role === 'admin'; }
-  function isFaculty() { return _currentUser && _currentUser.role === 'faculty'; }
-  function userRole() { return _currentUser ? _currentUser.role : null; }
-
-  /* ---- User storage ---- */
-  function getUsers() {
-    return _loadUsers().map(_ensureUserShape);
+    try {
+      const credential = await _auth().createUserWithEmailAndPassword(email, password);
+      const profile = await _saveProfile({
+        uid: credential.user.uid,
+        username,
+        usernameLower: _normalize(username),
+        email,
+        name: rawFullName || 'New Faculty',
+        fullName: rawFullName || 'New Faculty',
+        role: 'faculty',
+        user_status: 'ACTIVE',
+        institution: rawInstitution || 'GCPS',
+        contactNumber: rawContact || '0000000000',
+        mainTopics: [...new Set(selectedMainTopics)],
+        tutorials: [...new Set(selectedTutorials)]
+      });
+      _currentUser = profile;
+      await _refreshUsersCache();
+      return {
+        success: true,
+        user: profile,
+        generatedPassword: !rawPassword,
+        tempPassword: !rawPassword ? password : ''
+      };
+    } catch (error) {
+      return { success: false, error: error.message || 'Unable to create account' };
+    }
   }
 
   async function addUser(username, password, role, name, profile = {}) {
+    await ready();
     if (!isAdmin()) return { success: false, error: 'Only admin can create users' };
 
-    const users = _loadUsers().map(_ensureUserShape);
-    const loginName = _normalize(username || profile.email || '');
-    const email = String(profile.email || username || '').trim();
-    const fullName = String(name || profile.fullName || email || loginName).trim();
-    const institution = String(profile.institution || '').trim();
-    const contactNumber = String(profile.contactNumber || '').trim();
-    const curriculumDefaults = (typeof TutorialCatalog !== 'undefined' && TutorialCatalog.allSelectionIds)
-      ? TutorialCatalog.allSelectionIds()
-      : { groups: [], tutorials: [] };
-    const selectedMainTopics = Array.isArray(profile.selectedMainTopics) && profile.selectedMainTopics.length
-      ? profile.selectedMainTopics
-      : curriculumDefaults.groups;
-    const selectedTutorials = Array.isArray(profile.selectedTutorials) && profile.selectedTutorials.length
-      ? profile.selectedTutorials
-      : curriculumDefaults.tutorials;
-
-    if (!loginName) {
-      return { success: false, error: 'Username or email is required' };
-    }
-    if (users.find(u => _normalize(u.username) === loginName || _normalize(u.email) === _normalize(email))) {
-      return { success: false, error: 'Username already exists' };
-    }
-    if (!password) {
-      return { success: false, error: 'Password is required' };
-    }
-    const strength = _validatePasswordStrength(password);
+    const safeUsername = _slugify(username || profile.email || name || `user-${Date.now()}`);
+    const email = _validEmail(profile.email) ? profile.email : `${safeUsername}@dalhousie.app`;
+    const safePassword = String(password || '').trim() || _generateTempPassword();
+    const strength = _validatePasswordStrength(safePassword);
     if (!strength.ok) return { success: false, error: strength.message };
 
-    const salt = _newSalt();
-    const passwordHash = await _hashPassword(password, salt);
-    const user = {
-      username: loginName,
-      email: email || loginName,
-      name: fullName,
-      institution,
-      contactNumber,
-      role: role || 'faculty',
-      mainTopics: [...new Set(selectedMainTopics)],
-      tutorials: [...new Set(selectedTutorials)],
-      salt,
-      passwordHash,
-      sessionToken: '',
-      createdAt: new Date().toISOString()
-    };
+    const selections = _curriculumDefaults();
+    const selectedMainTopics = Array.isArray(profile.selectedMainTopics) && profile.selectedMainTopics.length
+      ? profile.selectedMainTopics
+      : selections.groups;
+    const selectedTutorials = Array.isArray(profile.selectedTutorials) && profile.selectedTutorials.length
+      ? profile.selectedTutorials
+      : selections.tutorials;
 
-    users.push(user);
-    _saveUsers(users);
-    return { success: true, user };
+    try {
+      const secondary = _secondaryAuth();
+      const credential = await secondary.createUserWithEmailAndPassword(email, safePassword);
+      const newProfile = await _saveProfile({
+        uid: credential.user.uid,
+        username: safeUsername,
+        usernameLower: _normalize(safeUsername),
+        email,
+        name: String(name || profile.fullName || safeUsername).trim() || safeUsername,
+        fullName: String(name || profile.fullName || safeUsername).trim() || safeUsername,
+        role: role || 'faculty',
+        user_status: 'ACTIVE',
+        institution: String(profile.institution || '').trim(),
+        contactNumber: String(profile.contactNumber || '').trim(),
+        mainTopics: [...new Set(selectedMainTopics)],
+        tutorials: [...new Set(selectedTutorials)]
+      });
+      if (secondary.currentUser) await secondary.signOut();
+      await _refreshUsersCache();
+      return {
+        success: true,
+        user: newProfile,
+        generatedPassword: !String(password || '').trim(),
+        tempPassword: !String(password || '').trim() ? safePassword : ''
+      };
+    } catch (error) {
+      return { success: false, error: error.message || 'Unable to create user' };
+    }
   }
 
-  function deleteUser(username) {
+  async function deleteUser(username) {
+    await ready();
     if (!isAdmin()) return { success: false, error: 'Only admin can delete users' };
-    if (_normalize(username) === 'admin') return { success: false, error: 'Cannot delete the default admin' };
-    let users = _loadUsers().map(_ensureUserShape);
-    const before = users.length;
-    users = users.filter(u => _normalize(u.username) !== _normalize(username));
-    if (users.length === before) return { success: false, error: 'User not found' };
-    _saveUsers(users);
+
+    const lookup = String(username || '').trim();
+    const profile = await _loadProfileByUsername(lookup) || await _loadProfileByUsername(_slugify(lookup));
+    if (!profile) return { success: false, error: 'User not found' };
+    if (_normalize(profile.username) === 'admin') {
+      return { success: false, error: 'Cannot delete the default admin' };
+    }
+
+    await _disableProfile(profile.uid);
+    if (_currentUser && _currentUser.uid === profile.uid) {
+      await _auth().signOut();
+    }
+    await _refreshUsersCache();
     return { success: true };
   }
 
   async function resetPassword(username, newPassword) {
+    await ready();
     if (!isAdmin()) return { success: false, error: 'Only admin can reset passwords' };
-    if (!newPassword) return { success: false, error: 'New password is required' };
-    const strength = _validatePasswordStrength(newPassword);
-    if (!strength.ok) return { success: false, error: strength.message };
 
-    const users = _loadUsers().map(_ensureUserShape);
-    const user = users.find(u => _normalize(u.username) === _normalize(username));
-    if (!user) return { success: false, error: 'User not found' };
+    const lookup = String(username || '').trim();
+    const target = lookup.includes('@')
+      ? await _loadProfileByUsername(_slugify(lookup.split('@')[0]))
+      : await _loadProfileByUsername(lookup);
+    if (!target) return { success: false, error: 'User not found' };
 
-    const salt = _newSalt();
-    user.salt = salt;
-    user.passwordHash = await _hashPassword(newPassword, salt);
-    if (_currentUser && _normalize(_currentUser.username) === _normalize(user.username)) {
-      user.sessionToken = _currentUser.sessionToken || _newSessionToken();
-      _currentUser = { ..._currentUser, ...user };
-      _saveSession(_currentUser);
+    try {
+      await _auth().sendPasswordResetEmail(target.email);
+      return { success: true, message: `Password reset email sent to ${target.email}` };
+    } catch (error) {
+      return { success: false, error: error.message || 'Unable to send reset email' };
     }
-    _saveUsers(users);
-    return { success: true };
   }
 
-  function updateSelections(username, { mainTopics = [], tutorials = [] } = {}) {
-    const users = _loadUsers().map(_ensureUserShape);
-    const user = users.find(u => _normalize(u.username) === _normalize(username));
-    if (!user) return { success: false, error: 'User not found' };
-    user.mainTopics = [...mainTopics];
-    user.tutorials = [...tutorials];
-    _saveUsers(users);
-    if (_currentUser && _normalize(_currentUser.username) === _normalize(user.username)) {
-      _currentUser = { ..._currentUser, ...user };
+  async function updateSelections(username, { mainTopics = [], tutorials = [] } = {}) {
+    await ready();
+
+    const lookup = String(username || '').trim();
+    const profile = (_currentUser && (
+      _normalize(_currentUser.username) === _normalize(lookup) ||
+      _normalize(_currentUser.email) === _normalize(lookup)
+    ))
+      ? _currentUser
+      : await _loadProfileByUsername(lookup) || await _loadProfileByUsername(_slugify(lookup));
+
+    if (!profile) return { success: false, error: 'User not found' };
+
+    const nextProfile = {
+      ...profile,
+      mainTopics: [...new Set(mainTopics)],
+      tutorials: [...new Set(tutorials)],
+      updatedAt: new Date().toISOString()
+    };
+
+    await _saveProfile(nextProfile);
+    if (_currentUser && _currentUser.uid === nextProfile.uid) {
+      _currentUser = nextProfile;
     }
-    return { success: true, user };
+    await _refreshUsersCache();
+    return { success: true, user: nextProfile };
+  }
+
+  function currentUser() {
+    return _currentUser;
+  }
+
+  function isLoggedIn() {
+    return !!_currentUser;
+  }
+
+  function isAdmin() {
+    return _currentUser && _normalize(_currentUser.role) === 'admin' && _normalize(_currentUser.user_status) !== 'deleted';
+  }
+
+  function isFaculty() {
+    return _currentUser && _normalize(_currentUser.role) === 'faculty' && _normalize(_currentUser.user_status) !== 'deleted';
+  }
+
+  function userRole() {
+    return _currentUser ? _currentUser.role : null;
+  }
+
+  function getUsers() {
+    return _users.slice();
+  }
+
+  function logout() {
+    return _auth().signOut();
   }
 
   function getPasswordStrength(password) {
     return _validatePasswordStrength(password);
   }
 
-  /* ---- Init on load ---- */
   init();
 
   return {
     init,
+    ready,
     login,
     logout,
     currentUser,
