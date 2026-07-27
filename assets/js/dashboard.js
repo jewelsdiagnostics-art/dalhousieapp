@@ -1,5 +1,5 @@
 /* ============================================
-   dashboard.js â€” Dashboard with CSV-driven stats
+   dashboard.js - Dashboard with CSV-driven stats
    ============================================ */
 
 App.registerPage('dashboard', () => {
@@ -281,8 +281,8 @@ App.registerPage('dashboard', () => {
                 <li class="activity-item">
                   <span class="activity-item__dot activity-item__dot--primary"></span>
                   <div class="activity-item__content">
-                    <div class="activity-item__text"><strong>${m.Title || ''}</strong> â€” ${m.Location || ''}</div>
-                    <div class="activity-item__time">${App.formatDate(m.Date)} Â· ${m.Time || ''}</div>
+                    <div class="activity-item__text"><strong>${m.Title || ''}</strong> &mdash; ${m.Location || ''}</div>
+                    <div class="activity-item__time">${App.formatDate(m.Date)} &middot; ${m.Time || ''}</div>
                   </div>
                 </li>
               `).join('')}

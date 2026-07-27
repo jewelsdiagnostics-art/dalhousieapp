@@ -137,7 +137,7 @@ a:hover { color: var(--secondary); }
 
 .btn--primary {
   background: var(--primary);
-  color: var(--text-inverse);
+  color: var(--on-primary);
   border-color: var(--primary);
 }
 .btn--primary:hover {
@@ -147,7 +147,7 @@ a:hover { color: var(--secondary); }
 
 .btn--secondary {
   background: var(--secondary);
-  color: var(--text-inverse);
+  color: var(--on-secondary);
   border-color: var(--secondary);
 }
 .btn--secondary:hover {
@@ -157,7 +157,7 @@ a:hover { color: var(--secondary); }
 
 .btn--accent {
   background: var(--accent);
-  color: var(--text-inverse);
+  color: var(--on-accent);
   border-color: var(--accent);
 }
 .btn--accent:hover {
@@ -272,7 +272,7 @@ textarea.input {
   transform: translateX(-50%);
   padding: 0.3em 0.7em;
   font-size: 0.75rem;
-  color: var(--text-inverse);
+  color: #ffffff;
   background: var(--neutral-800);
   border-radius: var(--radius-sm);
   white-space: nowrap;

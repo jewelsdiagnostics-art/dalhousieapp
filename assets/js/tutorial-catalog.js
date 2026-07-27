@@ -1,5 +1,5 @@
 /* ============================================
-   Tutorial Catalog â€” shared course/topic data
+   Tutorial Catalog - shared course/topic data
    ============================================ */
 
 const TutorialCatalog = (() => {
@@ -47,7 +47,7 @@ const TutorialCatalog = (() => {
       description: 'General adult psychiatry, daily clinical care, and teaching rounds.',
       tutorials: [
         { id: 'mem-11', label: 'Clinical Topics' },
-        { id: 'mem-12', label: 'Specific Clinical Topics â€” Didactic Lectures' },
+        { id: 'mem-12', label: 'Specific Clinical Topics - Didactic Lectures' },
         { id: 'psy-09', label: 'Psychopharmacology & Medication Management' },
         { id: 'psy-10', label: 'Consultation-Liaison Psychiatry' },
         { id: 'psy-11', label: 'Psychiatric Emergencies in Medical Settings' }

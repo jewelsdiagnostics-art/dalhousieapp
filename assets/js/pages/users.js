@@ -1,5 +1,5 @@
 /* ============================================
-   User Management â€” Admin only
+   User Management - Admin only
    ============================================ */
 
 App.registerPage('users', () => {
