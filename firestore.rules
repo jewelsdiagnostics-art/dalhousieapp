@@ -22,7 +22,10 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return userRole() == "admin";
+      return isSignedIn() && (
+        userRole() == "admin"
+        || request.auth.token.email == "admin@dalhousie.app"
+      );
     }
 
     match /users/{userId} {

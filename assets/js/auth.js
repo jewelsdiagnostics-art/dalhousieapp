@@ -4,6 +4,7 @@
 
 const Auth = (() => {
   const USERS_COLLECTION = 'users';
+  const ADMIN_EMAIL = 'admin@dalhousie.app';
   let _currentUser = null;
   let _users = [];
   let _bootstrapPromise = null;
@@ -29,6 +30,29 @@ const Auth = (() => {
 
   function _normalize(value) {
     return String(value || '').trim().toLowerCase();
+  }
+
+  function _isConfiguredAdmin(user) {
+    return !!user && _normalize(user.email) === ADMIN_EMAIL;
+  }
+
+  function _asAdminProfile(user, profile) {
+    const defaults = _curriculumDefaults();
+    return {
+      ...(profile || {}),
+      uid: user.uid,
+      username: 'admin',
+      usernameLower: 'admin',
+      email: user.email || ADMIN_EMAIL,
+      name: 'Administrator',
+      fullName: 'Administrator',
+      role: 'admin',
+      user_status: 'ACTIVE',
+      institution: (profile && profile.institution) || '',
+      contactNumber: (profile && profile.contactNumber) || '',
+      mainTopics: (profile && Array.isArray(profile.mainTopics)) ? profile.mainTopics : defaults.groups,
+      tutorials: (profile && Array.isArray(profile.tutorials)) ? profile.tutorials : defaults.tutorials
+    };
   }
 
   function _slugify(value) {
@@ -191,6 +215,10 @@ const Auth = (() => {
       ]);
     } catch (error) {
       profile = null;
+    }
+
+    if (_isConfiguredAdmin(user)) {
+      profile = _asAdminProfile(user, profile);
     }
 
     if (!profile) {

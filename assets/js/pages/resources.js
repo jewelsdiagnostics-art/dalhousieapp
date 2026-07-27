@@ -12,6 +12,22 @@ const ProgrammeResources = [
   { id: 'psychopharmacology-reference-guide', name: 'Psychopharmacology Reference Guide.pdf', file: 'data/resources/psychopharmacology-reference-guide.pdf', type: 'pdf', category: 'Reference', uploaded: '2026-07-05', author: 'Dr. Asare' },
   { id: 'meeting-minutes-june-2026', name: 'Meeting Minutes - June 2026.docx', file: 'data/resources/meeting-minutes-june-2026.docx', type: 'doc', category: 'Minutes', uploaded: '2026-06-28', author: 'Admin' }
 ];
+const DELETED_RESOURCES_KEY = 'dalhousie-deleted-resources';
+
+function localDeletedResourceIds() {
+  try {
+    const ids = JSON.parse(localStorage.getItem(DELETED_RESOURCES_KEY) || '[]');
+    return new Set(Array.isArray(ids) ? ids : []);
+  } catch (error) {
+    return new Set();
+  }
+}
+
+function rememberDeletedResource(id) {
+  const ids = localDeletedResourceIds();
+  ids.add(id);
+  localStorage.setItem(DELETED_RESOURCES_KEY, JSON.stringify([...ids]));
+}
 
 function formatFileSize(bytes) {
   if (bytes < 1024) return `${bytes} B`;
@@ -196,15 +212,21 @@ App.registerPage('resources', () => {
       if (button.dataset.local === 'true') {
         URL.revokeObjectURL(button.dataset.file);
       } else {
-        if (!window.FirebaseDb || !window.firebase) throw new Error('The resource database is unavailable.');
-        const currentUser = Auth.currentUser();
-        await window.FirebaseDb.collection('resourceDeletions').doc(button.dataset.id).set({
-          resourceId: button.dataset.id,
-          name: button.dataset.name,
-          file: button.dataset.file,
-          deletedBy: currentUser.uid,
-          deletedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        rememberDeletedResource(button.dataset.id);
+        if (window.FirebaseDb && window.firebase) {
+          const currentUser = Auth.currentUser();
+          try {
+            await window.FirebaseDb.collection('resourceDeletions').doc(button.dataset.id).set({
+              resourceId: button.dataset.id,
+              name: button.dataset.name,
+              file: button.dataset.file,
+              deletedBy: currentUser.uid,
+              deletedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          } catch (error) {
+            console.warn('Resource deletion saved locally:', error && error.message ? error.message : error);
+          }
+        }
       }
 
       row.remove();
@@ -217,18 +239,21 @@ App.registerPage('resources', () => {
   }
 
   async function loadDeletedResources() {
-    if (!window.FirebaseDb) return;
+    const deletedIds = localDeletedResourceIds();
 
-    try {
-      const snapshot = await window.FirebaseDb.collection('resourceDeletions').get();
-      const deletedIds = new Set(snapshot.docs.map(doc => doc.id));
-      tableBody.querySelectorAll('tr').forEach(row => {
-        if (deletedIds.has(row.dataset.resourceId)) row.remove();
-      });
-      applyFilters();
-    } catch (error) {
-      Notifications.toast('Resources notice', 'Deleted-resource records could not be loaded.', 'warning');
+    if (window.FirebaseDb) {
+      try {
+        const snapshot = await window.FirebaseDb.collection('resourceDeletions').get();
+        snapshot.docs.forEach(doc => deletedIds.add(doc.id));
+      } catch (error) {
+        console.warn('Using locally saved resource deletions:', error && error.message ? error.message : error);
+      }
     }
+
+    tableBody.querySelectorAll('tr').forEach(row => {
+      if (deletedIds.has(row.dataset.resourceId)) row.remove();
+    });
+    applyFilters();
   }
 
   function bindActionButtons() {
