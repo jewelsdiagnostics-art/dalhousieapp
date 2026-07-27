@@ -66,6 +66,10 @@ const Auth = (() => {
     };
   }
 
+  function _wait(ms) {
+    return new Promise(resolve => window.setTimeout(resolve, ms));
+  }
+
   function _curriculumDefaults() {
     return (typeof TutorialCatalog !== 'undefined' && TutorialCatalog.allSelectionIds)
       ? TutorialCatalog.allSelectionIds()
@@ -111,9 +115,15 @@ const Auth = (() => {
   async function _loadProfileByUsername(username) {
     const lookup = _normalize(username);
     if (!lookup) return null;
-    const snap = await _usersRef().where('usernameLower', '==', lookup).limit(1).get();
-    if (snap.empty) return null;
-    return _profileFromDoc(snap.docs[0]);
+
+    let snap = await _usersRef().where('usernameLower', '==', lookup).limit(1).get();
+    if (!snap.empty) return _profileFromDoc(snap.docs[0]);
+
+    // Fallback for legacy profiles that may not have usernameLower indexed yet.
+    snap = await _usersRef().where('username', '==', String(username || '').trim()).limit(1).get();
+    if (!snap.empty) return _profileFromDoc(snap.docs[0]);
+
+    return null;
   }
 
   async function _loadAllProfiles() {
@@ -173,9 +183,18 @@ const Auth = (() => {
       return null;
     }
 
-    let profile = await _loadProfileByUid(user.uid);
+    let profile = null;
+    try {
+      profile = await Promise.race([
+        _loadProfileByUid(user.uid),
+        _wait(1800).then(() => null)
+      ]);
+    } catch (error) {
+      profile = null;
+    }
+
     if (!profile) {
-      profile = await _saveProfile({
+      profile = {
         uid: user.uid,
         username: _slugify(user.displayName || user.email || user.uid),
         usernameLower: _normalize(_slugify(user.displayName || user.email || user.uid)),
@@ -188,6 +207,9 @@ const Auth = (() => {
         contactNumber: '',
         mainTopics: _curriculumDefaults().groups,
         tutorials: _curriculumDefaults().tutorials
+      };
+      _saveProfile(profile).catch(error => {
+        console.warn('Profile sync skipped during hydrate:', error && error.message ? error.message : error);
       });
     }
 
@@ -273,9 +295,15 @@ const Auth = (() => {
 
     let email = loginName;
     if (!loginName.includes('@')) {
-      const profile = await _loadProfileByUsername(loginName);
+      const profile = await Promise.race([
+        _loadProfileByUsername(loginName),
+        _wait(1800).then(() => null)
+      ]).catch(() => null);
       if (!profile || _normalize(profile.user_status) === 'deleted') {
-        return { success: false, error: 'Invalid username or password' };
+        return {
+          success: false,
+          error: 'Username lookup is taking too long right now. Try signing in with your email address instead.'
+        };
       }
       email = profile.email;
     }
@@ -286,7 +314,8 @@ const Auth = (() => {
       if (!user) return { success: false, error: 'Invalid username or password' };
       return { success: true, user };
     } catch (error) {
-      return { success: false, error: 'Invalid username or password' };
+      console.error('Auth.login error', error);
+      return { success: false, error: error && error.message ? error.message : 'Invalid username or password' };
     }
   }
 
@@ -316,7 +345,7 @@ const Auth = (() => {
 
     try {
       const credential = await _auth().createUserWithEmailAndPassword(email, password);
-      const profile = await _saveProfile({
+      const profile = {
         uid: credential.user.uid,
         username,
         usernameLower: _normalize(username),
@@ -329,9 +358,14 @@ const Auth = (() => {
         contactNumber: rawContact || '0000000000',
         mainTopics: [...new Set(selectedMainTopics)],
         tutorials: [...new Set(selectedTutorials)]
+      };
+      _saveProfile(profile).catch(error => {
+        console.warn('Profile sync skipped during signup:', error && error.message ? error.message : error);
       });
       _currentUser = profile;
-      await _refreshUsersCache();
+      _refreshUsersCache().catch(error => {
+        console.warn('User cache refresh skipped during signup:', error && error.message ? error.message : error);
+      });
       return {
         success: true,
         user: profile,
@@ -490,7 +524,7 @@ const Auth = (() => {
 
   init();
 
-  return {
+  const api = {
     init,
     ready,
     login,
@@ -508,4 +542,10 @@ const Auth = (() => {
     updateSelections,
     getPasswordStrength
   };
+
+  if (typeof window !== 'undefined') {
+    window.Auth = api;
+  }
+
+  return api;
 })();
