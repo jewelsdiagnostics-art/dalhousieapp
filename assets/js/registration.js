@@ -353,7 +353,16 @@ const RegistrationPortal = (() => {
       });
     }
     if (error) error.style.display = 'none';
-    window.setTimeout(() => window.location.reload(), 1200);
+    window.setTimeout(() => {
+      const overlay = _overlay();
+      if (overlay) overlay.classList.remove('signup-modal-overlay--open');
+
+      if (typeof window.showAuthenticatedApp === 'function') {
+        window.showAuthenticatedApp();
+      } else {
+        window.location.reload();
+      }
+    }, 700);
   }
 
   _bind();
