@@ -295,17 +295,21 @@ const Auth = (() => {
 
     let email = loginName;
     if (!loginName.includes('@')) {
-      const profile = await Promise.race([
-        _loadProfileByUsername(loginName),
-        _wait(1800).then(() => null)
-      ]).catch(() => null);
-      if (!profile || _normalize(profile.user_status) === 'deleted') {
-        return {
-          success: false,
-          error: 'Username lookup is taking too long right now. Try signing in with your email address instead.'
-        };
+      if (_normalize(loginName) === 'admin') {
+        email = 'admin@dalhousie.app';
+      } else {
+        const profile = await Promise.race([
+          _loadProfileByUsername(loginName),
+          _wait(1800).then(() => null)
+        ]).catch(() => null);
+        if (!profile || _normalize(profile.user_status) === 'deleted') {
+          return {
+            success: false,
+            error: 'Username lookup is taking too long right now. Try signing in with your email address instead.'
+          };
+        }
+        email = profile.email;
       }
-      email = profile.email;
     }
 
     try {
