@@ -3,14 +3,14 @@
    ============================================ */
 
 const ProgrammeResources = [
-  { name: 'Programme Handbook 2026.pdf', file: 'data/resources/programme-handbook-2026.pdf', type: 'pdf', category: 'Policy', uploaded: '2026-06-15', author: 'Prof. Owusu' },
-  { name: 'Clinical Rotation Guidelines.docx', file: 'data/resources/clinical-rotation-guidelines.docx', type: 'doc', category: 'Guidelines', uploaded: '2026-06-20', author: 'Dr. Darko' },
-  { name: 'Assessment Rubric - OSCE 2026.xlsx', file: 'data/resources/assessment-rubric-osce-2026.xlsx', type: 'sheet', category: 'Assessment', uploaded: '2026-07-01', author: 'Dr. Adjei' },
-  { name: 'Fellowship Application Template.docx', file: 'data/resources/fellowship-application-template.docx', type: 'doc', category: 'Forms', uploaded: '2026-05-10', author: 'Admin' },
-  { name: 'Research Ethics Guidelines.pdf', file: 'data/resources/research-ethics-guidelines.pdf', type: 'pdf', category: 'Policy', uploaded: '2026-04-28', author: 'Prof. Nkrumah' },
-  { name: 'Monthly Report Template.xlsx', file: 'data/resources/monthly-report-template.xlsx', type: 'sheet', category: 'Forms', uploaded: '2026-06-30', author: 'Admin' },
-  { name: 'Psychopharmacology Reference Guide.pdf', file: 'data/resources/psychopharmacology-reference-guide.pdf', type: 'pdf', category: 'Reference', uploaded: '2026-07-05', author: 'Dr. Asare' },
-  { name: 'Meeting Minutes - June 2026.docx', file: 'data/resources/meeting-minutes-june-2026.docx', type: 'doc', category: 'Minutes', uploaded: '2026-06-28', author: 'Admin' }
+  { id: 'programme-handbook-2026', name: 'Programme Handbook 2026.pdf', file: 'data/resources/programme-handbook-2026.pdf', type: 'pdf', category: 'Policy', uploaded: '2026-06-15', author: 'Prof. Owusu' },
+  { id: 'clinical-rotation-guidelines', name: 'Clinical Rotation Guidelines.docx', file: 'data/resources/clinical-rotation-guidelines.docx', type: 'doc', category: 'Guidelines', uploaded: '2026-06-20', author: 'Dr. Darko' },
+  { id: 'assessment-rubric-osce-2026', name: 'Assessment Rubric - OSCE 2026.xlsx', file: 'data/resources/assessment-rubric-osce-2026.xlsx', type: 'sheet', category: 'Assessment', uploaded: '2026-07-01', author: 'Dr. Adjei' },
+  { id: 'fellowship-application-template', name: 'Fellowship Application Template.docx', file: 'data/resources/fellowship-application-template.docx', type: 'doc', category: 'Forms', uploaded: '2026-05-10', author: 'Admin' },
+  { id: 'research-ethics-guidelines', name: 'Research Ethics Guidelines.pdf', file: 'data/resources/research-ethics-guidelines.pdf', type: 'pdf', category: 'Policy', uploaded: '2026-04-28', author: 'Prof. Nkrumah' },
+  { id: 'monthly-report-template', name: 'Monthly Report Template.xlsx', file: 'data/resources/monthly-report-template.xlsx', type: 'sheet', category: 'Forms', uploaded: '2026-06-30', author: 'Admin' },
+  { id: 'psychopharmacology-reference-guide', name: 'Psychopharmacology Reference Guide.pdf', file: 'data/resources/psychopharmacology-reference-guide.pdf', type: 'pdf', category: 'Reference', uploaded: '2026-07-05', author: 'Dr. Asare' },
+  { id: 'meeting-minutes-june-2026', name: 'Meeting Minutes - June 2026.docx', file: 'data/resources/meeting-minutes-june-2026.docx', type: 'doc', category: 'Minutes', uploaded: '2026-06-28', author: 'Admin' }
 ];
 
 function formatFileSize(bytes) {
@@ -26,8 +26,12 @@ function resourceIcon(type) {
 }
 
 function resourceRow(resource) {
+  const canDelete = Auth.isAdmin && Auth.isAdmin();
+  const resourceId = resource.id || `local-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const isLocal = resource.isLocal === true;
+
   return `
-    <tr data-category="${resource.category}" data-resource-name="${resource.name.toLowerCase()}">
+    <tr data-category="${resource.category}" data-resource-id="${resourceId}" data-resource-name="${resource.name.toLowerCase()}" data-local="${isLocal}">
       <td class="cell--name">
         <span style="margin-right:6px;">${resourceIcon(resource.type)}</span>
         ${resource.name}
@@ -41,6 +45,7 @@ function resourceRow(resource) {
         <div class="table-actions">
           <a class="table-icon-btn" href="${resource.file}" download="${resource.name}" title="Download ${resource.name}" aria-label="Download ${resource.name}">⬇️</a>
           <button class="table-icon-btn resource-share" type="button" data-file="${resource.file}" data-name="${resource.name}" title="Share ${resource.name}" aria-label="Share ${resource.name}">🔗</button>
+          ${canDelete ? `<button class="table-icon-btn table-icon-btn--danger resource-delete" type="button" data-id="${resourceId}" data-file="${resource.file}" data-name="${resource.name}" data-local="${isLocal}" title="Delete ${resource.name}" aria-label="Delete ${resource.name}">🗑️</button>` : ''}
         </div>
       </td>
     </tr>
@@ -136,13 +141,15 @@ App.registerPage('resources', () => {
       const extension = file.name.split('.').pop().toLowerCase();
       const type = extension === 'pdf' ? 'pdf' : extension === 'xlsx' ? 'sheet' : 'doc';
       const resource = {
+        id: `local-${Date.now()}-${Math.random().toString(16).slice(2)}`,
         name: file.name,
         file: URL.createObjectURL(file),
         type,
         size: formatFileSize(file.size),
         category: 'Local',
         uploaded: new Date().toISOString().slice(0, 10),
-        author: 'You'
+        author: 'You',
+        isLocal: true
       };
 
       tableBody.insertAdjacentHTML('afterbegin', resourceRow(resource));
@@ -150,7 +157,7 @@ App.registerPage('resources', () => {
 
     if (files.length) {
       Notifications.toast('Files ready', 'Your selected files can now be downloaded from this page.', 'success');
-      bindShareButtons();
+      bindActionButtons();
       applyFilters();
     }
   }
@@ -173,10 +180,65 @@ App.registerPage('resources', () => {
     }
   }
 
-  function bindShareButtons() {
+  async function deleteResource(button) {
+    if (!Auth.isAdmin || !Auth.isAdmin()) {
+      Notifications.toast('Admin access required', 'Only an administrator can delete resources.', 'error');
+      return;
+    }
+
+    const confirmed = window.confirm(`Delete "${button.dataset.name}" from the Resources list?`);
+    if (!confirmed) return;
+
+    const row = button.closest('tr');
+    button.disabled = true;
+
+    try {
+      if (button.dataset.local === 'true') {
+        URL.revokeObjectURL(button.dataset.file);
+      } else {
+        if (!window.FirebaseDb || !window.firebase) throw new Error('The resource database is unavailable.');
+        const currentUser = Auth.currentUser();
+        await window.FirebaseDb.collection('resourceDeletions').doc(button.dataset.id).set({
+          resourceId: button.dataset.id,
+          name: button.dataset.name,
+          file: button.dataset.file,
+          deletedBy: currentUser.uid,
+          deletedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+
+      row.remove();
+      applyFilters();
+      Notifications.toast('Resource deleted', `${button.dataset.name} was removed from the Resources list.`, 'success');
+    } catch (error) {
+      button.disabled = false;
+      Notifications.toast('Delete failed', error.message || 'The resource could not be deleted.', 'error');
+    }
+  }
+
+  async function loadDeletedResources() {
+    if (!window.FirebaseDb) return;
+
+    try {
+      const snapshot = await window.FirebaseDb.collection('resourceDeletions').get();
+      const deletedIds = new Set(snapshot.docs.map(doc => doc.id));
+      tableBody.querySelectorAll('tr').forEach(row => {
+        if (deletedIds.has(row.dataset.resourceId)) row.remove();
+      });
+      applyFilters();
+    } catch (error) {
+      Notifications.toast('Resources notice', 'Deleted-resource records could not be loaded.', 'warning');
+    }
+  }
+
+  function bindActionButtons() {
     document.querySelectorAll('.resource-share:not([data-bound])').forEach(button => {
       button.dataset.bound = 'true';
       button.addEventListener('click', () => shareResource(button));
+    });
+    document.querySelectorAll('.resource-delete:not([data-bound])').forEach(button => {
+      button.dataset.bound = 'true';
+      button.addEventListener('click', () => deleteResource(button));
     });
   }
 
@@ -219,5 +281,6 @@ App.registerPage('resources', () => {
     fileInput.value = '';
   });
 
-  bindShareButtons();
+  bindActionButtons();
+  loadDeletedResources();
 });

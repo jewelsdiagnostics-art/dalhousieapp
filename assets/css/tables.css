@@ -128,6 +128,20 @@
   color: var(--text-primary);
 }
 
+.table-icon-btn--danger {
+  color: var(--error);
+}
+
+.table-icon-btn--danger:hover {
+  color: var(--error);
+  background: var(--error-bg);
+}
+
+.table-icon-btn:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
 /* Pagination */
 .pagination {
   display: flex;

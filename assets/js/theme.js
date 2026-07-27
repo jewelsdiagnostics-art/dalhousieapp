@@ -31,9 +31,14 @@ const Theme = (() => {
   function _apply(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     const icon = document.getElementById('theme-icon');
+    const label = document.getElementById('theme-label');
+    const button = document.getElementById('btn-theme');
+    const nextMode = theme === 'dark' ? 'light' : 'dark';
     if (icon) {
       icon.textContent = theme === 'dark' ? '☀️' : '🌙';
     }
+    if (label) label.textContent = `Switch to ${nextMode[0].toUpperCase()}${nextMode.slice(1)} Mode`;
+    if (button) button.setAttribute('aria-label', `Switch to ${nextMode} mode`);
   }
 
   function toggle() {
