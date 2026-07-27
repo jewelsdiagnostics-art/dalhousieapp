@@ -193,7 +193,12 @@ const Auth = (() => {
 
   async function _refreshUsersCache() {
     if (isAdmin()) {
-      _users = (await _loadAllProfiles()).filter(user => _normalize(user.user_status) !== 'deleted');
+      try {
+        _users = (await _loadAllProfiles()).filter(user => _normalize(user.user_status) !== 'deleted');
+      } catch (error) {
+        console.warn('User management data is not available yet:', error && error.message ? error.message : error);
+        _users = _currentUser ? [_currentUser] : [];
+      }
       return _users;
     }
     _users = _currentUser ? [_currentUser] : [];
