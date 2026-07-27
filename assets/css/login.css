@@ -830,6 +830,10 @@
 
 .signup-modal__btn {
   min-width: 140px;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+  touch-action: manipulation;
 }
 
 .password-meter {

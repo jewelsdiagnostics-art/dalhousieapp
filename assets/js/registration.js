@@ -4,7 +4,8 @@
 
 const RegistrationPortal = (() => {
   const state = {
-    bound: false
+    bound: false,
+    submitting: false
   };
 
   function _overlay() {
@@ -149,6 +150,10 @@ const RegistrationPortal = (() => {
       }
       if (e.target && e.target.id === 'signup-toggle-confirm') {
         _togglePasswordField('signup-confirm', e.target);
+      }
+      if (e.target && e.target.closest && e.target.closest('#signup-submit')) {
+        e.preventDefault();
+        await _submit();
       }
     });
 
@@ -295,6 +300,9 @@ const RegistrationPortal = (() => {
   }
 
   async function _submit() {
+    if (state.submitting) return;
+    state.submitting = true;
+
     const error = document.getElementById('signup-error');
     const name = document.getElementById('signup-name').value.trim();
     const email = document.getElementById('signup-email').value.trim();
@@ -317,6 +325,7 @@ const RegistrationPortal = (() => {
     });
 
     if (!result.success) {
+      state.submitting = false;
       if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.textContent = 'Create Account';
@@ -354,6 +363,7 @@ const RegistrationPortal = (() => {
     }
     if (error) error.style.display = 'none';
     window.setTimeout(() => {
+      state.submitting = false;
       const overlay = _overlay();
       if (overlay) overlay.classList.remove('signup-modal-overlay--open');
 
