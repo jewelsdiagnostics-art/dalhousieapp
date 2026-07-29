@@ -1,25 +1,78 @@
 /* ============================================
-   Faculty Directory — CSV import + manual entry
+   Faculty Directory - workbook data + admin tools
    ============================================ */
 
 const FacultyPage = (() => {
+  const SEED_KEY = 'dalhousie_faculty_directory_seed_v1';
   const fields = [
-    { key:'Name', label:'Full Name', type:'text', placeholder:'Prof. Samuel Owusu' },
-    { key:'Title', label:'Title / Role', type:'text', placeholder:'Programme Director' },
-    { key:'Department', label:'Department', type:'text', placeholder:'General Psychiatry' },
-    { key:'Email', label:'Email', type:'email', placeholder:'s.owusu@dal.ca' },
-    { key:'Phone', label:'Phone', type:'text', placeholder:'+233-50-123-4567' },
-    { key:'Speciality', label:'Speciality', type:'text', placeholder:'Mood Disorders' },
-    { key:'Location', label:'Location', type:'text', placeholder:'Accra' },
-    { key:'Fellows', label:'Fellows Supervised', type:'number', placeholder:'4' }
+    { key: 'Name', label: 'Full Name', type: 'text', placeholder: 'Prof. Samuel Owusu' },
+    { key: 'Title', label: 'Position / Rank', type: 'text', placeholder: 'Consultant Psychiatrist' },
+    { key: 'Institution', label: 'Institution', type: 'text', placeholder: 'GCPS' },
+    { key: 'Email', label: 'Email', type: 'email', placeholder: 'name@example.com' },
+    { key: 'Speciality', label: 'Interest Areas / Specialization', type: 'text', placeholder: 'Global Mental Health' }
   ];
 
-  /* ---- Called from onclick ---- */
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function identity(entry) {
+    return String(entry.Email || entry.Name || '').trim().toLowerCase();
+  }
+
+  function normalizeEntry(entry) {
+    return {
+      Name: String(entry.Name || '').trim(),
+      Title: String(entry.Title || entry.Role || '').trim(),
+      Institution: String(entry.Institution || entry.Department || '').trim(),
+      Email: String(entry.Email || '').trim(),
+      Speciality: String(entry.Speciality || entry.Specialization || '').trim()
+    };
+  }
+
+  function ensureDirectoryData() {
+    const defaults = (window.DalhousieFacultyDirectory || []).map(normalizeEntry);
+
+    try {
+      if (localStorage.getItem(SEED_KEY) === 'complete') {
+        return CSVImport.getData('faculty').map(normalizeEntry);
+      }
+
+      const existing = CSVImport.getData('faculty').map(normalizeEntry);
+      const merged = [];
+      const seen = new Set();
+
+      defaults.concat(existing).forEach(entry => {
+        const key = identity(entry);
+        if (!entry.Name || seen.has(key)) return;
+        seen.add(key);
+        merged.push(entry);
+      });
+
+      CSVImport.importData('faculty', merged);
+      localStorage.setItem(SEED_KEY, 'complete');
+      return merged;
+    } catch (error) {
+      return defaults;
+    }
+  }
+
+  function getFaculty() {
+    return ensureDirectoryData();
+  }
+
   function saveFaculty() {
+    if (!Auth.isAdmin || !Auth.isAdmin()) return;
+
     const newEntry = {};
-    fields.forEach(f => {
-      const el = document.getElementById('fac-'+f.key);
-      newEntry[f.key] = el ? el.value.trim() : '';
+    fields.forEach(field => {
+      const input = document.getElementById('fac-' + field.key);
+      newEntry[field.key] = input ? input.value.trim() : '';
     });
 
     if (!newEntry.Name) {
@@ -27,12 +80,12 @@ const FacultyPage = (() => {
       return;
     }
 
-    const existing = CSVImport.getData('faculty');
-    const editIdxEl = document.getElementById('fac-edit-idx');
-    const editIdx = editIdxEl ? editIdxEl.value : '';
+    const existing = getFaculty();
+    const editInput = document.getElementById('fac-edit-idx');
+    const editIndex = editInput ? editInput.value : '';
 
-    if (editIdx !== '') {
-      existing[parseInt(editIdx)] = newEntry;
+    if (editIndex !== '') {
+      existing[Number(editIndex)] = newEntry;
       Notifications.toast('Updated', `${newEntry.Name} updated`, 'success');
     } else {
       existing.push(newEntry);
@@ -45,132 +98,202 @@ const FacultyPage = (() => {
 
   function cancelForm() {
     const form = document.getElementById('faculty-form-card');
-    if (form) form.style.display = 'none';
+    if (form) form.hidden = true;
   }
 
   function showAddForm() {
+    if (!Auth.isAdmin || !Auth.isAdmin()) return;
     const form = document.getElementById('faculty-form-card');
     const title = document.getElementById('faculty-form-title');
-    const editIdx = document.getElementById('fac-edit-idx');
-    if (form) form.style.display = '';
+    const editInput = document.getElementById('fac-edit-idx');
+
+    if (form) form.hidden = false;
     if (title) title.textContent = 'Add Faculty Member';
-    if (editIdx) editIdx.value = '';
-    fields.forEach(f => { const el = document.getElementById('fac-'+f.key); if (el) el.value = ''; });
-    if (form) form.scrollIntoView({ behavior:'smooth' });
+    if (editInput) editInput.value = '';
+    fields.forEach(field => {
+      const input = document.getElementById('fac-' + field.key);
+      if (input) input.value = '';
+    });
+    if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  function editFaculty(idx) {
-    const existing = CSVImport.getData('faculty');
-    const entry = existing[idx];
+  function editFaculty(index) {
+    if (!Auth.isAdmin || !Auth.isAdmin()) return;
+    const entry = getFaculty()[index];
     if (!entry) return;
 
-    const form = document.getElementById('faculty-form-card');
-    const title = document.getElementById('faculty-form-title');
-    const editIdx = document.getElementById('fac-edit-idx');
-    if (form) form.style.display = '';
-    if (title) title.textContent = `Edit: ${entry.Name}`;
-    if (editIdx) editIdx.value = idx;
-    fields.forEach(f => {
-      const el = document.getElementById('fac-'+f.key);
-      if (el) el.value = entry[f.key] || '';
+    showAddForm();
+    document.getElementById('faculty-form-title').textContent = `Edit: ${entry.Name}`;
+    document.getElementById('fac-edit-idx').value = index;
+    fields.forEach(field => {
+      const input = document.getElementById('fac-' + field.key);
+      if (input) input.value = entry[field.key] || '';
     });
-    if (form) form.scrollIntoView({ behavior:'smooth' });
   }
 
-  function deleteFaculty(idx) {
-    const existing = CSVImport.getData('faculty');
-    const name = existing[idx] ? existing[idx].Name : 'this member';
-    if (confirm(`Delete ${name} from faculty directory?`)) {
-      existing.splice(idx, 1);
+  function deleteFaculty(index) {
+    if (!Auth.isAdmin || !Auth.isAdmin()) return;
+    const existing = getFaculty();
+    const name = existing[index] ? existing[index].Name : 'this member';
+
+    if (confirm(`Delete ${name} from the faculty directory?`)) {
+      existing.splice(index, 1);
       CSVImport.importData('faculty', existing);
       Notifications.toast('Deleted', `${name} removed`, 'info');
       App.navigate('faculty');
     }
   }
 
-  /* ---- Render ---- */
-  function render() {
-    const faculty = CSVImport.getData('faculty');
+  function initials(name) {
+    return String(name || '')
+      .replace(/\b(Dr|Prof)\.?\s*/gi, '')
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part.charAt(0).toUpperCase())
+      .join('');
+  }
+
+  function renderCard(entry, index, isAdmin) {
+    const name = escapeHtml(entry.Name);
+    const title = escapeHtml(entry.Title);
+    const institution = escapeHtml(entry.Institution);
+    const speciality = escapeHtml(entry.Speciality);
+    const email = escapeHtml(entry.Email);
 
     return `
-      <div class="page-content">
-        <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
+      <article class="faculty-card" data-search="${escapeHtml(
+        [entry.Name, entry.Title, entry.Institution, entry.Speciality, entry.Email].join(' ').toLowerCase()
+      )}" data-institution="${institution}">
+        <div class="faculty-card__top">
+          <div class="faculty-card__avatar" aria-hidden="true">${escapeHtml(initials(entry.Name))}</div>
+          <div class="faculty-card__identity">
+            <h2 class="faculty-card__name">${name}</h2>
+            <p class="faculty-card__title">${title || 'Faculty member'}</p>
+          </div>
+        </div>
+        ${institution ? `<p class="faculty-card__institution"><span aria-hidden="true">&#9679;</span>${institution}</p>` : ''}
+        ${speciality ? `
+          <div class="faculty-card__section">
+            <span class="faculty-card__label">Interest areas</span>
+            <p>${speciality}</p>
+          </div>
+        ` : ''}
+        <div class="faculty-card__footer">
+          ${email ? `<a class="faculty-card__email" href="mailto:${email}">${email}</a>` : '<span></span>'}
+          ${isAdmin ? `
+            <div class="faculty-card__actions">
+              <button class="btn btn--outline btn--sm" type="button" onclick="FacultyPage.editFaculty(${index})">Edit</button>
+              <button class="btn btn--ghost btn--sm faculty-card__delete" type="button" onclick="FacultyPage.deleteFaculty(${index})">Delete</button>
+            </div>
+          ` : ''}
+        </div>
+      </article>
+    `;
+  }
+
+  function filterDirectory() {
+    const queryInput = document.getElementById('faculty-search');
+    const institutionSelect = document.getElementById('faculty-institution-filter');
+    const query = queryInput ? queryInput.value.trim().toLowerCase() : '';
+    const institution = institutionSelect ? institutionSelect.value : '';
+    let visible = 0;
+
+    document.querySelectorAll('.faculty-card').forEach(card => {
+      const matchesQuery = !query || card.dataset.search.includes(query);
+      const matchesInstitution = !institution || card.dataset.institution === institution;
+      card.hidden = !(matchesQuery && matchesInstitution);
+      if (!card.hidden) visible += 1;
+    });
+
+    const result = document.getElementById('faculty-results');
+    if (result) result.textContent = `${visible} faculty member${visible === 1 ? '' : 's'}`;
+
+    const empty = document.getElementById('faculty-filter-empty');
+    if (empty) empty.hidden = visible !== 0;
+  }
+
+  function render() {
+    const faculty = getFaculty();
+    const isAdmin = Boolean(Auth.isAdmin && Auth.isAdmin());
+    const institutions = [...new Set(faculty.map(entry => entry.Institution).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b));
+
+    return `
+      <div class="page-content faculty-directory">
+        <div class="faculty-directory__header">
           <div>
+            <span class="faculty-directory__eyebrow">Programme community</span>
             <h1 class="page-header__title">Faculty Directory</h1>
-            <p class="page-header__subtitle">Programme faculty, supervisors, and mentors</p>
+            <p class="page-header__subtitle">Dalhousie University and Ghana College of Physicians and Surgeons faculty</p>
           </div>
-          <button class="btn btn--primary" onclick="FacultyPage.showAddForm()">+ Add Faculty</button>
+          ${isAdmin ? `<button class="btn btn--primary" type="button" onclick="FacultyPage.showAddForm()">+ Add Faculty</button>` : ''}
         </div>
 
-        <!-- Manual entry form -->
-        <div class="section-card" id="faculty-form-card" style="display:none;margin-bottom:var(--space-5);border:2px solid var(--primary);overflow:visible;">
-          <div class="section-card__header">
-            <span class="section-card__title" id="faculty-form-title">Add Faculty Member</span>
-            <button class="btn btn--ghost btn--sm" onclick="FacultyPage.cancelForm()">✕ Cancel</button>
-          </div>
-          <div class="section-card__body">
-            <input type="hidden" id="fac-edit-idx" value="">
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:var(--space-4);">
-              ${fields.map(f => `
-                <div class="form-group">
-                  <label class="form-label">${f.label}</label>
-                  <input type="${f.type}" class="input" id="fac-${f.key}" placeholder="${f.placeholder}">
-                </div>
-              `).join('')}
+        ${isAdmin ? `
+          <div class="section-card faculty-form" id="faculty-form-card" hidden>
+            <div class="section-card__header">
+              <span class="section-card__title" id="faculty-form-title">Add Faculty Member</span>
+              <button class="btn btn--ghost btn--sm" type="button" onclick="FacultyPage.cancelForm()">Cancel</button>
             </div>
-            <div style="margin-top:var(--space-4);display:flex;gap:var(--space-2);justify-content:flex-end;">
-              <button class="btn btn--primary" onclick="FacultyPage.saveFaculty()">💾 Save Faculty</button>
-            </div>
-          </div>
-        </div>
-
-        <div id="csv-upload-faculty-page"></div>
-
-        ${faculty.length === 0 ? `
-          <div class="empty-state">
-            <div class="empty-state__icon">👨‍🏫</div>
-            <div class="empty-state__title">No faculty data yet</div>
-            <p style="color:var(--text-muted);">Upload a CSV file or click "+ Add Faculty" to enter manually.</p>
-          </div>
-        ` : `
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:var(--space-4);" class="stagger" id="faculty-grid">
-            ${faculty.map((f, idx) => `
-              <div class="card fac-card" data-idx="${idx}">
-                <div style="display:flex;align-items:flex-start;gap:var(--space-4);">
-                  <div style="width:56px;height:56px;border-radius:var(--radius-xl);background:linear-gradient(135deg,var(--secondary-light),var(--secondary));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1.3rem;flex-shrink:0;">
-                    ${(f.Name||'').split(' ').map(n=>n[0]||'').join('').slice(0,3)}
+            <div class="section-card__body">
+              <input type="hidden" id="fac-edit-idx" value="">
+              <div class="faculty-form__grid">
+                ${fields.map(field => `
+                  <div class="form-group">
+                    <label class="form-label" for="fac-${field.key}">${field.label}</label>
+                    <input type="${field.type}" class="input" id="fac-${field.key}" placeholder="${field.placeholder}">
                   </div>
-                  <div style="flex:1;min-width:0;">
-                    <h3 style="font-size:1rem;margin-bottom:2px;">${f.Name||''}</h3>
-                    <div style="font-size:0.8rem;color:var(--primary);font-weight:500;">${f.Title||''}</div>
-                    <div style="font-size:0.82rem;color:var(--text-secondary);margin-top:2px;">${f.Department||''}</div>
-                  </div>
-                </div>
-                <div style="margin-top:var(--space-4);display:flex;flex-wrap:wrap;gap:var(--space-2);">
-                  ${f.Location ? `<span class="badge badge--secondary">📍 ${f.Location}</span>` : ''}
-                  ${f.Fellows ? `<span class="badge badge--info">🎓 ${f.Fellows} fellows</span>` : ''}
-                  ${f.Speciality ? `<span class="badge badge--accent">${f.Speciality}</span>` : ''}
-                </div>
-                ${f.Email || f.Phone ? `
-                  <div style="margin-top:var(--space-2);font-size:0.78rem;color:var(--text-muted);">
-                    ${f.Email ? `📧 ${f.Email}` : ''}${f.Email && f.Phone ? ' · ' : ''}${f.Phone ? `📞 ${f.Phone}` : ''}
-                  </div>
-                ` : ''}
-                <div style="margin-top:var(--space-3);display:flex;gap:var(--space-2);">
-                  <button class="btn btn--outline btn--sm" onclick="FacultyPage.editFaculty(${idx})">✏️ Edit</button>
-                  <button class="btn btn--ghost btn--sm" onclick="FacultyPage.deleteFaculty(${idx})" style="color:var(--error);">🗑️</button>
-                </div>
+                `).join('')}
               </div>
-            `).join('')}
+              <div class="faculty-form__actions">
+                <button class="btn btn--primary" type="button" onclick="FacultyPage.saveFaculty()">Save Faculty</button>
+              </div>
+            </div>
           </div>
-        `}
+          <div id="csv-upload-faculty-page"></div>
+        ` : ''}
+
+        <div class="faculty-toolbar" role="search">
+          <label class="faculty-search">
+            <span class="faculty-search__icon" aria-hidden="true">&#128269;</span>
+            <span class="sr-only">Search faculty</span>
+            <input id="faculty-search" type="search" placeholder="Search by name, role, institution, or interest..." oninput="FacultyPage.filterDirectory()">
+          </label>
+          <label class="faculty-filter">
+            <span class="sr-only">Filter by institution</span>
+            <select id="faculty-institution-filter" onchange="FacultyPage.filterDirectory()">
+              <option value="">All institutions</option>
+              ${institutions.map(item => `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`).join('')}
+            </select>
+          </label>
+          <span class="faculty-toolbar__count" id="faculty-results">${faculty.length} faculty members</span>
+        </div>
+
+        <div class="faculty-grid stagger" id="faculty-grid">
+          ${faculty.map((entry, index) => renderCard(entry, index, isAdmin)).join('')}
+        </div>
+        <div class="empty-state" id="faculty-filter-empty" hidden>
+          <div class="empty-state__title">No matching faculty found</div>
+          <p>Try a different name, institution, or interest area.</p>
+        </div>
       </div>
     `;
   }
 
-  return { render, saveFaculty, cancelForm, showAddForm, editFaculty, deleteFaculty };
+  return {
+    render,
+    saveFaculty,
+    cancelForm,
+    showAddForm,
+    editFaculty,
+    deleteFaculty,
+    filterDirectory
+  };
 })();
 
 App.registerPage('faculty', () => FacultyPage.render(), () => {
-  CSVImport.renderUploadUI('csv-upload-faculty-page', 'faculty', () => App.navigate('faculty'));
+  if (Auth.isAdmin && Auth.isAdmin()) {
+    CSVImport.renderUploadUI('csv-upload-faculty-page', 'faculty', () => App.navigate('faculty'));
+  }
 });
