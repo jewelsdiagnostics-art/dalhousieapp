@@ -1,0 +1,25 @@
+/* Approved participant names sourced from "names of faculty.xlsx". */
+window.DalhousieFacultyProfiles = [
+  { id: 'mutiat-sulyman', name: 'Dr. Mutiat Sulyman' },
+  { id: 'risk-n-kronfli', name: 'Dr. Risk N. Kronfli' },
+  { id: 'sanjana-sridharan', name: 'Dr. Sanjana Sridharan' },
+  { id: 'margaret-leigh-meldrum', name: 'Dr. Margaret Leigh Meldrum' },
+  { id: 'christine-mcclelland', name: 'Dr. Christine McClelland' },
+  { id: 'kathleen-singh', name: 'Dr. Kathleen Singh' },
+  { id: 'jason-morrison', name: 'Dr. Jason Morrison' },
+  { id: 'lara-hazelton', name: 'Dr. Lara Hazelton' },
+  { id: 'john-a-oguntade', name: 'Dr. John A. Oguntade' },
+  { id: 'mahmoud-awara', name: 'Dr. Mahmoud Awara' },
+  { id: 'abraham-rudnick', name: 'Prof. Abraham Rudnick' },
+  { id: 'alexandra-manning', name: 'Dr. Alexandra Manning' },
+  { id: 'vincent-agyapong', name: 'Prof Vincent Agyapong' },
+  { id: 'sammy-ohene', name: 'Prof. Sammy Ohene' },
+  { id: 'akwasi-osei', name: 'Prof. Akwasi Osei' },
+  { id: 'pinaman-appau', name: 'Prof. Pinaman Appau' },
+  { id: 'ruth-owusu-antwi', name: 'Dr. Ruth Owusu-Antwi' },
+  { id: 'delali-fiagbe', name: 'Dr. Delali Fiagbe' },
+  { id: 'winnifred-twum', name: 'Dr. Winnifred Twum' },
+  { id: 'richard-dei-asamoah', name: 'Dr. Richard Dei-Asamoah' },
+  { id: 'eugene-dordoye', name: 'Dr. Eugene Dordoye' },
+  { id: 'leveana-gyimah', name: 'Dr. Leveana Gyimah' }
+];

@@ -661,6 +661,25 @@
   box-shadow: 0 0 0 4px rgba(200, 150, 12, 0.12);
 }
 
+.login-profile-select {
+  width: 100%;
+  min-height: 48px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.login-profile-summary {
+  margin-top: var(--space-2);
+  min-height: 2.4em;
+  padding: 0.7rem 0.8rem;
+  border-radius: 12px;
+  border: 1px solid rgba(26, 58, 92, 0.1);
+  background: rgba(26, 58, 92, 0.045);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
 /* ---- Signup / Registration modal ---- */
 .signup-modal-overlay {
   position: fixed;

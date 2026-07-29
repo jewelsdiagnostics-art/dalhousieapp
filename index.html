@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="assets/css/variables.css">
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/layout.css">
-  <link rel="stylesheet" href="assets/css/login.css">
+  <link rel="stylesheet" href="assets/css/login.css?v=20260729-1">
   <link rel="stylesheet" href="assets/css/dashboard.css">
   <link rel="stylesheet" href="assets/css/curriculum.css">
   <link rel="stylesheet" href="assets/css/tables.css">
@@ -131,26 +131,29 @@
           <div class="login-modal__body">
             <div class="login-modal__error" id="login-error" aria-live="polite">Invalid username or password</div>
             <div class="form-group">
-              <label class="form-label" for="login-username">Username / Email</label>
-              <input type="text" class="input" id="login-username" placeholder="Enter username or email" autocomplete="username">
+              <label class="form-label" for="login-profile">Select Your Name / Participant Profile</label>
+              <select class="input login-profile-select" id="login-profile" autocomplete="username">
+                <option value="">Choose your profile</option>
+                <option value="admin">Administrator (Management)</option>
+              </select>
+              <div class="login-profile-summary" id="login-profile-summary" aria-live="polite">
+                Choose your name from the approved faculty list.
+              </div>
             </div>
             <div class="form-group">
               <div class="login-modal__field-head">
                 <label class="form-label" for="login-password">Password</label>
                 <button type="button" class="login-modal__toggle" id="toggle-password" aria-pressed="false">Show</button>
               </div>
-              <input type="password" class="input" id="login-password" placeholder="Enter password" autocomplete="current-password">
+              <input type="password" class="input" id="login-password" placeholder="Enter your access password" autocomplete="current-password">
             </div>
-            <button class="login-modal__btn" id="btn-login">Sign In</button>
-            <button type="button" class="login-modal__secondary-btn" id="btn-open-signup">Create New Faculty Account</button>
+            <button class="login-modal__btn" id="btn-login">Enter Portal</button>
+            <p class="login-modal__hint">Faculty access currently accepts any non-empty password. Individual passwords can be assigned later by the administrator.</p>
           </div>
         </section>
       </div>
     </div>
   </div>
-
-  <!-- ====== SIGN UP MODAL ====== -->
-  <div class="signup-modal-overlay" id="signup-modal-overlay"></div>
 
   <!-- ====== APP SHELL (hidden until login) ====== -->
   <div class="app" id="app" style="display:none;">
@@ -195,12 +198,12 @@
 
   <!-- ====== SCRIPTS ====== -->
   <script src="assets/js/tutorial-catalog.js"></script>
+  <script src="assets/js/faculty-profiles.js?v=20260729-1"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
   <script src="assets/js/firebase-config.js"></script>
-  <script src="assets/js/auth.js?v=20260727-5"></script>
-  <script src="assets/js/registration.js?v=20260727-3"></script>
+  <script src="assets/js/auth.js?v=20260729-1"></script>
   <script src="assets/js/app.js"></script>
   <script src="assets/js/sidebar.js"></script>
   <script src="assets/js/theme.js"></script>
@@ -223,43 +226,26 @@
       const app = document.getElementById('app');
       const error = document.getElementById('login-error');
       const btnLogin = document.getElementById('btn-login');
-      const inputUser = document.getElementById('login-username');
+      const profileSelect = document.getElementById('login-profile');
+      const profileSummary = document.getElementById('login-profile-summary');
       const inputPass = document.getElementById('login-password');
       const togglePassword = document.getElementById('toggle-password');
-      const btnSignup = document.getElementById('btn-open-signup');
+
+      (window.DalhousieFacultyProfiles || []).forEach(profile => {
+        const option = document.createElement('option');
+        option.value = profile.id;
+        option.textContent = profile.name;
+        profileSelect.appendChild(option);
+      });
 
       // Make the modal controls available immediately for inline onclick handlers.
       window.openLoginModal = function openLoginModal() {
         modalOverlay.classList.add('login-modal-overlay--open');
-        window.requestAnimationFrame(() => inputUser.focus());
+        window.requestAnimationFrame(() => profileSelect.focus());
       };
 
       window.closeLoginModal = function closeLoginModal() {
         modalOverlay.classList.remove('login-modal-overlay--open');
-      };
-
-      window.openSignupFromLogin = function openSignupFromLogin(e) {
-        if (e) {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-
-        if (typeof window.openSignupModal === 'function') {
-          window.openSignupModal();
-          return;
-        }
-
-        if (window.Registration && typeof window.Registration.open === 'function') {
-          window.Registration.open();
-          return;
-        }
-
-        if (window.Auth && typeof window.Auth.openSignupModal === 'function') {
-          window.Auth.openSignupModal();
-          return;
-        }
-
-        console.warn('Signup modal function not found. Check registration.js exports.');
       };
 
       window.showAuthenticatedApp = _showApp;
@@ -279,9 +265,9 @@
 
       btnLogin.addEventListener('click', _doLogin);
       inputPass.addEventListener('keydown', e => { if (e.key === 'Enter') _doLogin(); });
-      inputUser.addEventListener('keydown', e => { if (e.key === 'Enter') inputPass.focus(); });
+      profileSelect.addEventListener('change', _updateProfileSummary);
+      profileSelect.addEventListener('keydown', e => { if (e.key === 'Enter') inputPass.focus(); });
       togglePassword.addEventListener('click', _togglePasswordVisibility);
-      btnSignup.addEventListener('click', openSignupFromLogin);
       const heroSignin = document.getElementById('landing-signin-hero');
       if (heroSignin) heroSignin.addEventListener('click', openLoginModal);
       modalOverlay.addEventListener('click', e => {
@@ -292,26 +278,24 @@
       });
       function openLoginModal() {
         modalOverlay.classList.add('login-modal-overlay--open');
-        window.requestAnimationFrame(() => inputUser.focus());
+        window.requestAnimationFrame(() => profileSelect.focus());
       }
 
       function closeLoginModal() {
         modalOverlay.classList.remove('login-modal-overlay--open');
       }
 
-      function openSignupFromLogin(e) {
-        window.openSignupFromLogin(e);
-      }
-
       async function _doLogin() {
-        const username = inputUser.value.trim();
+        const profileId = profileSelect.value;
         const password = inputPass.value.trim();
-        if (!username || !password) {
-          error.textContent = 'Please enter both username and password';
+        if (!profileId || !password) {
+          error.textContent = 'Please select your name and enter a password.';
           error.classList.add('login-modal__error--visible');
           return;
         }
-        const result = await Auth.login(username, password);
+        const result = profileId === 'admin'
+          ? await Auth.login('admin@dalhousie.app', password)
+          : await Auth.loginFacultyProfile(profileId, password);
         if (result.success) {
           error.classList.remove('login-modal__error--visible');
           _showApp();
@@ -320,6 +304,20 @@
           error.classList.add('login-modal__error--visible');
           inputPass.value = '';
         }
+      }
+
+      function _updateProfileSummary() {
+        error.classList.remove('login-modal__error--visible');
+        if (profileSelect.value === 'admin') {
+          profileSummary.textContent = 'Administrator: full programme and user-management access.';
+          return;
+        }
+
+        const profile = (window.DalhousieFacultyProfiles || [])
+          .find(item => item.id === profileSelect.value);
+        profileSummary.textContent = profile
+          ? `${profile.name} | Approved faculty participant`
+          : 'Choose your name from the approved faculty list.';
       }
 
       function _togglePasswordVisibility() {
@@ -345,7 +343,10 @@
           document.getElementById('admin-section-label').style.display = 'none';
           document.getElementById('nav-users').style.display = 'none';
         }
-        document.getElementById('btn-logout').addEventListener('click', () => { Auth.logout(); location.reload(); });
+        document.getElementById('btn-logout').addEventListener('click', async () => {
+          await Auth.logout();
+          location.reload();
+        });
         App.init();
       }
     });

@@ -5,6 +5,7 @@
 const Auth = (() => {
   const USERS_COLLECTION = 'users';
   const ADMIN_EMAIL = 'admin@dalhousie.app';
+  const FACULTY_SESSION_KEY = 'dalhousie-faculty-session';
   let _currentUser = null;
   let _users = [];
   let _bootstrapPromise = null;
@@ -98,6 +99,55 @@ const Auth = (() => {
     return (typeof TutorialCatalog !== 'undefined' && TutorialCatalog.allSelectionIds)
       ? TutorialCatalog.allSelectionIds()
       : { groups: [], tutorials: [] };
+  }
+
+  function _facultyProfiles() {
+    return Array.isArray(window.DalhousieFacultyProfiles) ? window.DalhousieFacultyProfiles : [];
+  }
+
+  function _facultyProfileById(profileId) {
+    return _facultyProfiles().find(profile => profile.id === String(profileId || '').trim()) || null;
+  }
+
+  function _createLocalFacultyProfile(source, savedProfile = null) {
+    const defaults = _curriculumDefaults();
+    return {
+      uid: `faculty:${source.id}`,
+      profileId: source.id,
+      username: source.id,
+      usernameLower: source.id,
+      email: source.email || '',
+      name: source.name,
+      fullName: source.name,
+      role: 'faculty',
+      user_status: 'ACTIVE',
+      institution: 'Dalhousie-GCPS Faculty',
+      position: 'Faculty Participant',
+      interests: '',
+      mainTopics: savedProfile && Array.isArray(savedProfile.mainTopics)
+        ? savedProfile.mainTopics
+        : defaults.groups,
+      tutorials: savedProfile && Array.isArray(savedProfile.tutorials)
+        ? savedProfile.tutorials
+        : defaults.tutorials,
+      localProfile: true,
+      createdAt: (savedProfile && savedProfile.createdAt) || new Date().toISOString(),
+      updatedAt: (savedProfile && savedProfile.updatedAt) || new Date().toISOString()
+    };
+  }
+
+  function _readLocalFacultySession() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(FACULTY_SESSION_KEY) || 'null');
+      const source = saved && _facultyProfileById(saved.profileId);
+      return source ? _createLocalFacultyProfile(source, saved) : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function _saveLocalFacultySession(profile) {
+    localStorage.setItem(FACULTY_SESSION_KEY, JSON.stringify(profile));
   }
 
   function _usersRef() {
@@ -260,8 +310,18 @@ const Auth = (() => {
     if (_bootstrapPromise) return _bootstrapPromise;
 
     _bootstrapPromise = (async () => {
+      const localFaculty = _readLocalFacultySession();
+      if (localFaculty) {
+        _currentUser = localFaculty;
+        _users = [localFaculty];
+      }
+
       if (!_hasFirebase()) {
         console.warn('Firebase is not available yet.');
+        if (!_readySettled) {
+          _readySettled = true;
+          _readyResolve();
+        }
         return;
       }
 
@@ -272,8 +332,9 @@ const Auth = (() => {
         _auth().onAuthStateChanged(async user => {
           try {
             if (user) {
+              localStorage.removeItem(FACULTY_SESSION_KEY);
               await _hydrateFirebaseUser(user);
-            } else {
+            } else if (!_readLocalFacultySession()) {
               _currentUser = null;
               _users = [];
             }
@@ -353,6 +414,28 @@ const Auth = (() => {
     } catch (error) {
       console.error('Auth.login error', error);
       return { success: false, error: error && error.message ? error.message : 'Invalid username or password' };
+    }
+  }
+
+  async function loginFacultyProfile(profileId, password) {
+    await ready();
+
+    const source = _facultyProfileById(profileId);
+    if (!source || !String(password || '').trim()) {
+      return { success: false, error: 'Select your name and enter a password.' };
+    }
+
+    try {
+      if (_hasFirebase() && _auth().currentUser) {
+        await _auth().signOut();
+      }
+      const profile = _createLocalFacultyProfile(source);
+      _saveLocalFacultySession(profile);
+      _currentUser = profile;
+      _users = [profile];
+      return { success: true, user: profile };
+    } catch (error) {
+      return { success: false, error: error.message || 'Unable to start the faculty session.' };
     }
   }
 
@@ -519,6 +602,13 @@ const Auth = (() => {
       updatedAt: new Date().toISOString()
     };
 
+    if (nextProfile.localProfile) {
+      _saveLocalFacultySession(nextProfile);
+      _currentUser = nextProfile;
+      _users = [nextProfile];
+      return { success: true, user: nextProfile };
+    }
+
     await _saveProfile(nextProfile);
     if (_currentUser && _currentUser.uid === nextProfile.uid) {
       _currentUser = nextProfile;
@@ -551,8 +641,13 @@ const Auth = (() => {
     return _users.slice();
   }
 
-  function logout() {
-    return _auth().signOut();
+  async function logout() {
+    localStorage.removeItem(FACULTY_SESSION_KEY);
+    _currentUser = null;
+    _users = [];
+    if (_hasFirebase() && _auth().currentUser) {
+      await _auth().signOut();
+    }
   }
 
   function getPasswordStrength(password) {
@@ -565,6 +660,7 @@ const Auth = (() => {
     init,
     ready,
     login,
+    loginFacultyProfile,
     logout,
     currentUser,
     isLoggedIn,
