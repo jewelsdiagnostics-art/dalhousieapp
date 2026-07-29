@@ -11,7 +11,7 @@
 
   <link rel="stylesheet" href="assets/css/variables.css">
   <link rel="stylesheet" href="assets/css/base.css">
-  <link rel="stylesheet" href="assets/css/layout.css">
+  <link rel="stylesheet" href="assets/css/layout.css?v=20260729-2">
   <link rel="stylesheet" href="assets/css/login.css?v=20260729-1">
   <link rel="stylesheet" href="assets/css/dashboard.css">
   <link rel="stylesheet" href="assets/css/curriculum.css">
@@ -174,7 +174,18 @@
         <div class="sidebar__section-label" style="margin-top:var(--space-6);" id="admin-section-label">Administration</div>
         <a class="nav-item" data-page="users" href="#" id="nav-users"><span class="nav-item__icon">👤</span><span class="nav-item__text">User Management</span></a>
       </nav>
-      <div class="sidebar__footer"><a class="nav-item" id="btn-theme" href="#" aria-label="Switch to dark mode"><span class="nav-item__icon theme-toggle__icon" id="theme-icon">🌙</span><span class="nav-item__text" id="theme-label">Switch to Dark Mode</span></a></div>
+      <div class="sidebar__footer">
+        <div class="sidebar__footer-actions">
+          <button class="nav-item sidebar-control" id="btn-theme" type="button" aria-label="Switch to dark mode">
+            <span class="nav-item__icon theme-toggle__icon" id="theme-icon">&#9790;</span>
+            <span class="nav-item__text" id="theme-label">Switch to Dark Mode</span>
+          </button>
+          <button class="nav-item sidebar-control sidebar-control--logout" id="btn-logout" type="button" aria-label="Log Out">
+            <span class="nav-item__icon sidebar-logout__icon">&#10162;</span>
+            <span class="nav-item__text">Log Out</span>
+          </button>
+        </div>
+      </div>
     </aside>
 
     <div class="sidebar__overlay" id="sidebar-overlay"></div>
@@ -189,7 +200,6 @@
           <div style="text-align:right;"><div class="header__user-name" id="header-user-name">Admin</div><div class="header__user-role" id="header-user-role">Administrator</div></div>
           <div class="header__avatar" id="header-avatar">AD</div>
         </div>
-        <button class="header__logout-btn" id="btn-logout">↪</button>
       </div>
     </header>
 
@@ -206,7 +216,7 @@
   <script src="assets/js/auth.js?v=20260729-1"></script>
   <script src="assets/js/app.js"></script>
   <script src="assets/js/sidebar.js"></script>
-  <script src="assets/js/theme.js"></script>
+  <script src="assets/js/theme.js?v=20260729-2"></script>
   <script src="assets/js/search.js"></script>
   <script src="assets/js/notifications.js"></script>
   <script src="assets/js/csv-import.js"></script>
