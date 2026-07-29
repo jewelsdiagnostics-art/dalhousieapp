@@ -8,7 +8,6 @@ const FacultyPage = (() => {
     { key: 'Name', label: 'Full Name', type: 'text', placeholder: 'Prof. Samuel Owusu' },
     { key: 'Title', label: 'Position / Rank', type: 'text', placeholder: 'Consultant Psychiatrist' },
     { key: 'Institution', label: 'Institution', type: 'text', placeholder: 'GCPS' },
-    { key: 'Email', label: 'Email', type: 'email', placeholder: 'name@example.com' },
     { key: 'Speciality', label: 'Interest Areas / Specialization', type: 'text', placeholder: 'Global Mental Health' }
   ];
 
@@ -22,7 +21,7 @@ const FacultyPage = (() => {
   }
 
   function identity(entry) {
-    return String(entry.Email || entry.Name || '').trim().toLowerCase();
+    return String(entry.Name || '').trim().toLowerCase();
   }
 
   function normalizeEntry(entry) {
@@ -30,7 +29,6 @@ const FacultyPage = (() => {
       Name: String(entry.Name || '').trim(),
       Title: String(entry.Title || entry.Role || '').trim(),
       Institution: String(entry.Institution || entry.Department || '').trim(),
-      Email: String(entry.Email || '').trim(),
       Speciality: String(entry.Speciality || entry.Specialization || '').trim()
     };
   }
@@ -159,11 +157,10 @@ const FacultyPage = (() => {
     const title = escapeHtml(entry.Title);
     const institution = escapeHtml(entry.Institution);
     const speciality = escapeHtml(entry.Speciality);
-    const email = escapeHtml(entry.Email);
 
     return `
       <article class="faculty-card" data-search="${escapeHtml(
-        [entry.Name, entry.Title, entry.Institution, entry.Speciality, entry.Email].join(' ').toLowerCase()
+        [entry.Name, entry.Title, entry.Institution, entry.Speciality].join(' ').toLowerCase()
       )}" data-institution="${institution}">
         <div class="faculty-card__top">
           <div class="faculty-card__avatar" aria-hidden="true">${escapeHtml(initials(entry.Name))}</div>
@@ -179,15 +176,15 @@ const FacultyPage = (() => {
             <p>${speciality}</p>
           </div>
         ` : ''}
-        <div class="faculty-card__footer">
-          ${email ? `<a class="faculty-card__email" href="mailto:${email}">${email}</a>` : '<span></span>'}
-          ${isAdmin ? `
+        ${isAdmin ? `
+          <div class="faculty-card__footer">
+            <span></span>
             <div class="faculty-card__actions">
               <button class="btn btn--outline btn--sm" type="button" onclick="FacultyPage.editFaculty(${index})">Edit</button>
               <button class="btn btn--ghost btn--sm faculty-card__delete" type="button" onclick="FacultyPage.deleteFaculty(${index})">Delete</button>
             </div>
-          ` : ''}
-        </div>
+          </div>
+        ` : ''}
       </article>
     `;
   }
