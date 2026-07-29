@@ -224,32 +224,7 @@ const FacultyPage = (() => {
             <h1 class="page-header__title">Faculty Directory</h1>
             <p class="page-header__subtitle">Dalhousie University and Ghana College of Physicians and Surgeons faculty</p>
           </div>
-          ${isAdmin ? `<button class="btn btn--primary" type="button" onclick="FacultyPage.showAddForm()">+ Add Faculty</button>` : ''}
         </div>
-
-        ${isAdmin ? `
-          <div class="section-card faculty-form" id="faculty-form-card" hidden>
-            <div class="section-card__header">
-              <span class="section-card__title" id="faculty-form-title">Add Faculty Member</span>
-              <button class="btn btn--ghost btn--sm" type="button" onclick="FacultyPage.cancelForm()">Cancel</button>
-            </div>
-            <div class="section-card__body">
-              <input type="hidden" id="fac-edit-idx" value="">
-              <div class="faculty-form__grid">
-                ${fields.map(field => `
-                  <div class="form-group">
-                    <label class="form-label" for="fac-${field.key}">${field.label}</label>
-                    <input type="${field.type}" class="input" id="fac-${field.key}" placeholder="${field.placeholder}">
-                  </div>
-                `).join('')}
-              </div>
-              <div class="faculty-form__actions">
-                <button class="btn btn--primary" type="button" onclick="FacultyPage.saveFaculty()">Save Faculty</button>
-              </div>
-            </div>
-          </div>
-          <div id="csv-upload-faculty-page"></div>
-        ` : ''}
 
         <div class="faculty-toolbar" role="search">
           <label class="faculty-search">
@@ -274,6 +249,40 @@ const FacultyPage = (() => {
           <div class="empty-state__title">No matching faculty found</div>
           <p>Try a different name, institution, or interest area.</p>
         </div>
+
+        ${isAdmin ? `
+          <section class="faculty-admin-tools" aria-labelledby="faculty-admin-tools-title">
+            <div class="faculty-admin-tools__heading">
+              <div>
+                <span class="faculty-directory__eyebrow">Administrator tools</span>
+                <h2 id="faculty-admin-tools-title">Manage Faculty Directory</h2>
+                <p>Add an individual faculty member or replace the directory using a CSV file.</p>
+              </div>
+              <button class="btn btn--primary" type="button" onclick="FacultyPage.showAddForm()">+ Add Faculty</button>
+            </div>
+            <div class="section-card faculty-form" id="faculty-form-card" hidden>
+              <div class="section-card__header">
+                <span class="section-card__title" id="faculty-form-title">Add Faculty Member</span>
+                <button class="btn btn--ghost btn--sm" type="button" onclick="FacultyPage.cancelForm()">Cancel</button>
+              </div>
+              <div class="section-card__body">
+                <input type="hidden" id="fac-edit-idx" value="">
+                <div class="faculty-form__grid">
+                  ${fields.map(field => `
+                    <div class="form-group">
+                      <label class="form-label" for="fac-${field.key}">${field.label}</label>
+                      <input type="${field.type}" class="input" id="fac-${field.key}" placeholder="${field.placeholder}">
+                    </div>
+                  `).join('')}
+                </div>
+                <div class="faculty-form__actions">
+                  <button class="btn btn--primary" type="button" onclick="FacultyPage.saveFaculty()">Save Faculty</button>
+                </div>
+              </div>
+            </div>
+            <div id="csv-upload-faculty-page"></div>
+          </section>
+        ` : ''}
       </div>
     `;
   }
