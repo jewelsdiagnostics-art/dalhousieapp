@@ -119,6 +119,17 @@ App.registerPage('resources', () => {
           <tbody>${ProgrammeResources.map(resourceRow).join('')}</tbody>
         </table>
       </div>
+
+      <section class="resource-upload-section" id="resource-upload-section" aria-labelledby="resource-upload-title">
+        <div class="resource-upload-section__heading">
+          <div>
+            <span class="faculty-directory__eyebrow">File management</span>
+            <h2 id="resource-upload-title">Add Resources</h2>
+            <p>Upload new programme documents after reviewing the current resource library.</p>
+          </div>
+          <div id="resource-upload-action"></div>
+        </div>
+      </section>
     </div>
   `;
 }, () => {
@@ -126,7 +137,13 @@ App.registerPage('resources', () => {
   const searchInput = document.getElementById('res-search');
   const fileInput = document.getElementById('resource-file-input');
   const uploadZone = document.getElementById('upload-zone');
+  const uploadSection = document.getElementById('resource-upload-section');
+  const uploadAction = document.getElementById('resource-upload-action');
+  const uploadButton = document.getElementById('btn-upload');
   let activeCategory = 'all';
+
+  uploadAction.appendChild(uploadButton);
+  uploadSection.appendChild(uploadZone);
 
   function applyFilters() {
     const query = searchInput.value.trim().toLowerCase();
