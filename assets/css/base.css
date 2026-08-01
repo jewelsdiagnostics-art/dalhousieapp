@@ -72,8 +72,8 @@ a:hover { color: var(--secondary); }
 
 /* Selection */
 ::selection {
-  background: var(--primary-light);
-  color: var(--neutral-900);
+  background: var(--primary);
+  color: var(--text-inverse);
 }
 
 /* Utility classes */
@@ -222,7 +222,7 @@ a:hover { color: var(--secondary); }
 .input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(200, 150, 12, 0.15);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.18);
 }
 
 .input--search {

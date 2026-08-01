@@ -1,9 +1,9 @@
 :root {
   /* Primary palette — Dalhousie Gold + Ghana-inspired warmth */
-  --primary: #c8960c;
-  --primary-light: #e6b422;
-  --primary-dark: #8b6914;
-  --primary-bg: #fef9e7;
+  --primary: #1d4ed8;
+  --primary-light: #60a5fa;
+  --primary-dark: #1e40af;
+  --primary-bg: #dbeafe;
 
   /* Secondary - reference-inspired sky blue */
   --secondary: #0369a1;
@@ -12,10 +12,10 @@
   --secondary-bg: #f0f9ff;
 
   /* Accent - restrained violet */
-  --accent: #7c3aed;
-  --accent-light: #8b5cf6;
-  --accent-dark: #6d28d9;
-  --accent-bg: #f5f3ff;
+  --accent: #0f766e;
+  --accent-light: #14b8a6;
+  --accent-dark: #115e59;
+  --accent-bg: #ccfbf1;
 
   /* Slate neutrals */
   --neutral-50: #f8fafc;
@@ -54,7 +54,7 @@
   --text-secondary: #475569;
   --text-muted: #64748b;
   --text-inverse: #ffffff;
-  --on-primary: #111827;
+  --on-primary: #ffffff;
   --on-secondary: #ffffff;
   --on-accent: #ffffff;
 
@@ -106,38 +106,38 @@
 
 /* Dark theme */
 [data-theme="dark"] {
-  --bg: #0f172a;
-  --surface: #1e293b;
-  --surface-hover: #334155;
-  --border: #475569;
-  --border-light: #334155;
+  --bg: #0b1220;
+  --surface: #111b2e;
+  --surface-hover: #16243d;
+  --border: #2a3b5a;
+  --border-light: #21324e;
 
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
-  --text-inverse: #0f172a;
+  --text-primary: #f8fbff;
+  --text-secondary: #c5d4ea;
+  --text-muted: #8da2c3;
+  --text-inverse: #0b1220;
 
-  --primary: #f1bd31;
-  --primary-light: #ffd761;
-  --primary-dark: #d69b08;
-  --secondary: #38bdf8;
-  --secondary-light: #7dd3fc;
-  --secondary-dark: #0ea5e9;
-  --accent: #a78bfa;
-  --accent-light: #c4b5fd;
-  --accent-dark: #8b5cf6;
+  --primary: #60a5fa;
+  --primary-light: #93c5fd;
+  --primary-dark: #2563eb;
+  --secondary: #7dd3fc;
+  --secondary-light: #bae6fd;
+  --secondary-dark: #38bdf8;
+  --accent: #34d399;
+  --accent-light: #6ee7b7;
+  --accent-dark: #10b981;
   --success: #4ade80;
   --warning: #fbbf24;
   --error: #fb7185;
   --info: #60a5fa;
 
-  --on-primary: #172033;
-  --on-secondary: #07111f;
-  --on-accent: #1e1b4b;
+  --on-primary: #0b1220;
+  --on-secondary: #0b1220;
+  --on-accent: #0b1220;
 
-  --primary-bg: #392b08;
-  --secondary-bg: #0c4a6e;
-  --accent-bg: #2e1065;
+  --primary-bg: #14233e;
+  --secondary-bg: #0c2238;
+  --accent-bg: #12352f;
 
   --toggle-bg: rgba(51, 65, 85, 0.82);
   --toggle-bg-hover: #475569;

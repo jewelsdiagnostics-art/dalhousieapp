@@ -117,7 +117,7 @@ App.registerPage('fellowship', () => {
   function _renderSelectableCard(item, sectionLabel) {
     const selected = selectedTutorials.has(item.id);
     return `
-      <button type="button" class="fellowship-select-card${selected ? ' fellowship-select-card--selected' : ''}" data-tutorial-id="${item.id}" data-section="${sectionLabel}" style="width:100%;text-align:left;padding:var(--space-3);border:1px solid ${selected ? 'var(--primary)' : 'var(--border-light)'};border-radius:var(--radius-lg);background:${selected ? 'var(--primary-bg)' : 'var(--surface)'};cursor:pointer;display:grid;gap:0.55rem;box-shadow:${selected ? '0 12px 28px rgba(200,150,12,0.14)' : 'none'};">
+      <button type="button" class="fellowship-select-card${selected ? ' fellowship-select-card--selected' : ''}" data-tutorial-id="${item.id}" data-section="${sectionLabel}" style="width:100%;text-align:left;padding:var(--space-3);border:1px solid ${selected ? 'var(--primary)' : 'var(--border-light)'};border-radius:var(--radius-lg);background:${selected ? 'var(--primary-bg)' : 'var(--surface)'};cursor:pointer;display:grid;gap:0.55rem;box-shadow:${selected ? '0 12px 28px rgba(29,78,216,0.14)' : 'none'};">
         <div class="fellowship-select-card__top">
           <span class="badge badge--${sectionLabel === 'lectures' ? 'secondary' : 'primary'}">${sectionLabel === 'lectures' ? 'Lecture' : 'Tutorial'}</span>
           <span class="badge badge--neutral">${item.id}</span>
@@ -237,7 +237,7 @@ App.registerPage('fellowship', () => {
           <div class="section-card__body" style="padding-top:0;">
             <div class="curriculum-grid stagger" id="course-grid">
               ${courses.map((c, ci) => `
-                <div class="course-card card${selectedTutorials.has(c.id) ? ' course-card--selected' : ''}" data-cat="${c.cat}" data-course-id="${c.id}" id="course-${ci}"${selectedTutorials.has(c.id) ? ' style="border-color:var(--primary);box-shadow:0 18px 40px rgba(200,150,12,0.14);"' : ''}>
+                <div class="course-card card${selectedTutorials.has(c.id) ? ' course-card--selected' : ''}" data-cat="${c.cat}" data-course-id="${c.id}" id="course-${ci}"${selectedTutorials.has(c.id) ? ' style="border-color:var(--primary);box-shadow:0 18px 40px rgba(29,78,216,0.14);"' : ''}>
                   <div class="course-card__header" style="display:flex;justify-content:space-between;align-items:flex-start;">
                     <div>
                       <div class="course-card__code">${c.id}</div>
@@ -274,7 +274,7 @@ App.registerPage('fellowship', () => {
               <div class="stat-card"><div class="stat-card__icon stat-card__icon--green">📋</div><div class="stat-card__info"><div class="stat-card__label">Health Admin Course</div><div class="stat-card__value" style="font-size:0.95rem;">1 month minimum at approved institution</div></div></div>
               <div class="stat-card"><div class="stat-card__icon stat-card__icon--blue">📝</div><div class="stat-card__info"><div class="stat-card__label">Dissertation Proposal</div><div class="stat-card__value" style="font-size:0.85rem;">Submit by end of first 6 months</div></div></div>
             </div>
-            <div style="background:var(--primary-bg);border:1px solid rgba(200,150,12,0.2);border-radius:var(--radius-lg);padding:var(--space-4);">
+            <div style="background:var(--primary-bg);border:1px solid rgba(29,78,216,0.2);border-radius:var(--radius-lg);padding:var(--space-4);">
               <strong style="color:var(--primary-dark);">Year 1 Key Requirements:</strong>
               <ul style="margin:var(--space-2) 0 0 1.2rem;font-size:0.85rem;color:var(--text-secondary);line-height:1.8;">
                 <li>Supervised role consolidating Membership-level Psychiatry experience at a training institution/hospital recognised by GCPS</li>
@@ -620,7 +620,7 @@ App.registerPage('fellowship', () => {
 
       const selected = card.classList.toggle('course-card--selected');
       card.style.borderColor = selected ? 'var(--primary)' : '';
-      card.style.boxShadow = selected ? '0 18px 40px rgba(200,150,12,0.14)' : '';
+      card.style.boxShadow = selected ? '0 18px 40px rgba(29,78,216,0.14)' : '';
       btn.textContent = selected ? 'Selected' : 'Select';
 
       const selectedCards = [...document.querySelectorAll('.course-card.course-card--selected')];
@@ -652,7 +652,7 @@ App.registerPage('fellowship', () => {
       const isSelected = card.classList.toggle('fellowship-select-card--selected');
       card.style.borderColor = isSelected ? 'var(--primary)' : 'var(--border-light)';
       card.style.background = isSelected ? 'var(--primary-bg)' : 'var(--surface)';
-      card.style.boxShadow = isSelected ? '0 12px 28px rgba(200,150,12,0.14)' : 'none';
+      card.style.boxShadow = isSelected ? '0 12px 28px rgba(29,78,216,0.14)' : 'none';
 
       const statusBadge = card.querySelector('.badge--success, .badge--info');
       if (statusBadge) {
