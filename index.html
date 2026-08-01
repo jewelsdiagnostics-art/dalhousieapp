@@ -176,7 +176,7 @@
               <input type="password" class="input" id="login-password" placeholder="Enter your access password" autocomplete="current-password">
             </div>
             <button class="login-modal__btn" id="btn-login">Enter Portal</button>
-            <p class="login-modal__hint">Faculty access currently accepts any non-empty password. Individual passwords can be assigned later by the administrator.</p>
+            <p class="login-modal__hint">Use the password assigned to your Firebase faculty account. Contact the administrator if your account has not been activated.</p>
           </div>
         </section>
       </div>
@@ -201,6 +201,7 @@
         <a class="nav-item" data-page="resources" href="#"><span class="nav-item__icon">📁</span><span class="nav-item__text">Resources</span></a>
         <div class="sidebar__section-label" style="margin-top:var(--space-6);" id="admin-section-label">Administration</div>
         <a class="nav-item" data-page="users" href="#" id="nav-users"><span class="nav-item__icon">👤</span><span class="nav-item__text">User Management</span></a>
+        <a class="nav-item" data-page="restore" href="#" id="nav-restore"><span class="nav-item__icon">↺</span><span class="nav-item__text">Restore &amp; Audit</span></a>
       </nav>
       <div class="sidebar__footer">
         <div class="sidebar__footer-actions">
@@ -241,22 +242,25 @@
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-  <script src="assets/js/firebase-config.js"></script>
-  <script src="assets/js/auth.js?v=20260729-1"></script>
-  <script src="assets/js/app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-storage-compat.js"></script>
+  <script src="assets/js/firebase-config.js?v=20260801-2"></script>
+  <script src="assets/js/auth.js?v=20260801-2"></script>
+  <script src="assets/js/app.js?v=20260801-2"></script>
   <script src="assets/js/sidebar.js"></script>
   <script src="assets/js/theme.js?v=20260729-2"></script>
   <script src="assets/js/search.js"></script>
   <script src="assets/js/notifications.js"></script>
-  <script src="assets/js/csv-import.js"></script>
-  <script src="assets/js/dashboard.js"></script>
+  <script src="assets/js/shared-data.js?v=20260801-2"></script>
+  <script src="assets/js/csv-import.js?v=20260801-2"></script>
+  <script src="assets/js/dashboard.js?v=20260801-2"></script>
   <script src="assets/js/pages/membership.js"></script>
   <script src="assets/js/pages/fellowship.js"></script>
   <script src="assets/js/pages/meetings.js"></script>
-  <script src="assets/js/pages/tracker.js"></script>
-  <script src="assets/js/pages/faculty.js?v=20260729-3"></script>
-  <script src="assets/js/pages/resources.js?v=20260729-3"></script>
+  <script src="assets/js/pages/tracker.js?v=20260801-2"></script>
+  <script src="assets/js/pages/faculty.js?v=20260801-2"></script>
+  <script src="assets/js/pages/resources.js?v=20260801-2"></script>
   <script src="assets/js/pages/users.js"></script>
+  <script src="assets/js/pages/restore.js?v=20260801-2"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
@@ -367,7 +371,7 @@
         inputPass.focus();
       }
 
-      function _showApp() {
+      async function _showApp() {
         landing.classList.add('public-landing--hidden');
         closeLoginModal();
         app.style.display = '';
@@ -381,11 +385,20 @@
         if (!Auth.isAdmin()) {
           document.getElementById('admin-section-label').style.display = 'none';
           document.getElementById('nav-users').style.display = 'none';
+          document.getElementById('nav-restore').style.display = 'none';
         }
         document.getElementById('btn-logout').addEventListener('click', async () => {
           await Auth.logout();
           location.reload();
         });
+        if (typeof SharedData !== 'undefined') {
+          try {
+            await SharedData.init();
+          } catch (sharedError) {
+            console.error('Shared data initialization failed:', sharedError);
+            Notifications.toast('Shared Data Unavailable', sharedError.message || 'Using the last locally cached data.', 'warning');
+          }
+        }
         App.init();
       }
     });

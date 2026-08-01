@@ -1,8 +1,8 @@
 /* ============================================
-   Resources page
+   Shared Firebase resources
    ============================================ */
 
-const ProgrammeResources = [
+window.DalhousieProgrammeResources = [
   { id: 'programme-handbook-2026', name: 'Programme Handbook 2026.pdf', file: 'data/resources/programme-handbook-2026.pdf', type: 'pdf', category: 'Policy', uploaded: '2026-06-15', author: 'Prof. Owusu' },
   { id: 'clinical-rotation-guidelines', name: 'Clinical Rotation Guidelines.docx', file: 'data/resources/clinical-rotation-guidelines.docx', type: 'doc', category: 'Guidelines', uploaded: '2026-06-20', author: 'Dr. Darko' },
   { id: 'assessment-rubric-osce-2026', name: 'Assessment Rubric - OSCE 2026.xlsx', file: 'data/resources/assessment-rubric-osce-2026.xlsx', type: 'sheet', category: 'Assessment', uploaded: '2026-07-01', author: 'Dr. Adjei' },
@@ -12,22 +12,6 @@ const ProgrammeResources = [
   { id: 'psychopharmacology-reference-guide', name: 'Psychopharmacology Reference Guide.pdf', file: 'data/resources/psychopharmacology-reference-guide.pdf', type: 'pdf', category: 'Reference', uploaded: '2026-07-05', author: 'Dr. Asare' },
   { id: 'meeting-minutes-june-2026', name: 'Meeting Minutes - June 2026.docx', file: 'data/resources/meeting-minutes-june-2026.docx', type: 'doc', category: 'Minutes', uploaded: '2026-06-28', author: 'Admin' }
 ];
-const DELETED_RESOURCES_KEY = 'dalhousie-deleted-resources';
-
-function localDeletedResourceIds() {
-  try {
-    const ids = JSON.parse(localStorage.getItem(DELETED_RESOURCES_KEY) || '[]');
-    return new Set(Array.isArray(ids) ? ids : []);
-  } catch (error) {
-    return new Set();
-  }
-}
-
-function rememberDeletedResource(id) {
-  const ids = localDeletedResourceIds();
-  ids.add(id);
-  localStorage.setItem(DELETED_RESOURCES_KEY, JSON.stringify([...ids]));
-}
 
 function formatFileSize(bytes) {
   if (bytes < 1024) return `${bytes} B`;
@@ -36,32 +20,28 @@ function formatFileSize(bytes) {
 }
 
 function resourceIcon(type) {
-  if (type === 'pdf') return '📕';
-  if (type === 'doc') return '📄';
-  return '📊';
+  if (type === 'pdf') return 'PDF';
+  if (type === 'sheet') return 'XLS';
+  return 'DOC';
 }
 
 function resourceRow(resource) {
   const canDelete = Auth.isAdmin && Auth.isAdmin();
-  const resourceId = resource.id || `local-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const isLocal = resource.isLocal === true;
-
+  const resourceId = resource._id || resource.id;
+  const revision = Number(resource._revision || resource.revision || 0);
   return `
-    <tr data-category="${resource.category}" data-resource-id="${resourceId}" data-resource-name="${resource.name.toLowerCase()}" data-local="${isLocal}">
-      <td class="cell--name">
-        <span style="margin-right:6px;">${resourceIcon(resource.type)}</span>
-        ${resource.name}
-      </td>
+    <tr data-category="${resource.category}" data-resource-id="${resourceId}" data-resource-name="${resource.name.toLowerCase()}" data-revision="${revision}">
+      <td class="cell--name"><span class="badge badge--neutral" style="margin-right:6px;">${resourceIcon(resource.type)}</span>${resource.name}</td>
       <td><span class="badge badge--primary">${resource.category}</span></td>
-      <td class="cell--muted">${resource.type.toUpperCase()}</td>
+      <td class="cell--muted">${String(resource.type || '').toUpperCase()}</td>
       <td class="cell--muted">${resource.size || 'Ready'}</td>
       <td class="cell--muted">${App.formatDate(resource.uploaded)}</td>
-      <td>${resource.author}</td>
+      <td>${resource.author || ''}</td>
       <td>
         <div class="table-actions">
-          <a class="table-icon-btn" href="${resource.file}" download="${resource.name}" title="Download ${resource.name}" aria-label="Download ${resource.name}">⬇️</a>
-          <button class="table-icon-btn resource-share" type="button" data-file="${resource.file}" data-name="${resource.name}" title="Share ${resource.name}" aria-label="Share ${resource.name}">🔗</button>
-          ${canDelete ? `<button class="table-icon-btn table-icon-btn--danger resource-delete" type="button" data-id="${resourceId}" data-file="${resource.file}" data-name="${resource.name}" data-local="${isLocal}" title="Delete ${resource.name}" aria-label="Delete ${resource.name}">🗑️</button>` : ''}
+          <a class="table-icon-btn" href="${resource.file}" download="${resource.name}" title="Download ${resource.name}" aria-label="Download ${resource.name}">&#8595;</a>
+          <button class="table-icon-btn resource-share" type="button" data-file="${resource.file}" data-name="${resource.name}" title="Share ${resource.name}" aria-label="Share ${resource.name}">&#128279;</button>
+          ${canDelete ? `<button class="table-icon-btn table-icon-btn--danger resource-delete" type="button" data-id="${resourceId}" data-name="${resource.name}" data-revision="${revision}" title="Delete ${resource.name}" aria-label="Delete ${resource.name}">&#128465;</button>` : ''}
         </div>
       </td>
     </tr>
@@ -69,16 +49,15 @@ function resourceRow(resource) {
 }
 
 App.registerPage('resources', () => {
-  const categories = [...new Set(ProgrammeResources.map(resource => resource.category))];
+  const resources = SharedData.isReady() ? SharedData.getData('resources') : window.DalhousieProgrammeResources;
+  const categories = [...new Set(resources.map(resource => resource.category).filter(Boolean))];
+  const canUpload = Auth.isAdmin && Auth.isAdmin();
 
   return `
     <div class="page-content">
-      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap;">
-        <div>
-          <h1 class="page-header__title">Resources & Documents</h1>
-          <p class="page-header__subtitle">Access programme materials, templates, and reference documents</p>
-        </div>
-        <button class="btn btn--primary" id="btn-upload" type="button">📤 Add Local File</button>
+      <div class="page-header">
+        <h1 class="page-header__title">Resources &amp; Documents</h1>
+        <p class="page-header__subtitle">Shared programme materials stored in Firebase Storage</p>
       </div>
 
       <div style="display:flex;gap:var(--space-2);margin-bottom:var(--space-5);flex-wrap:wrap;" id="cat-filters">
@@ -86,50 +65,35 @@ App.registerPage('resources', () => {
         ${categories.map(category => `<button class="btn btn--sm btn--outline res-cat" type="button" data-cat="${category}">${category}</button>`).join('')}
       </div>
 
-      <div class="upload-zone" id="upload-zone" style="margin-bottom:var(--space-6);" role="button" tabindex="0">
-        <div class="upload-zone__icon">📁</div>
-        <div class="upload-zone__text">Drag and drop files here, or click to browse</div>
-        <div class="upload-zone__hint">PDF, DOCX, XLSX and PPTX files up to 25 MB. Local additions last for this browser session.</div>
-        <input id="resource-file-input" type="file" accept=".pdf,.docx,.xlsx,.pptx" multiple hidden>
-        <div class="file-list" id="file-list"></div>
-      </div>
-
       <div class="table-container">
         <div class="table-toolbar">
-          <div class="table-toolbar__left">
-            <span class="table-info" id="res-count">${ProgrammeResources.length} resources</span>
-          </div>
-          <div class="table-toolbar__right">
-            <input type="search" class="input" id="res-search" placeholder="Search resources..." style="width:200px;">
-          </div>
+          <div class="table-toolbar__left"><span class="table-info" id="res-count">${resources.length} resources</span></div>
+          <div class="table-toolbar__right"><input type="search" class="input" id="res-search" placeholder="Search resources..." style="width:200px;"></div>
         </div>
-
         <table class="data-table" id="res-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Category</th>
-              <th>Type</th>
-              <th>Size</th>
-              <th>Uploaded</th>
-              <th>Author</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>${ProgrammeResources.map(resourceRow).join('')}</tbody>
+          <thead><tr><th>Name</th><th>Category</th><th>Type</th><th>Size</th><th>Uploaded</th><th>Author</th><th>Actions</th></tr></thead>
+          <tbody>${resources.map(resourceRow).join('')}</tbody>
         </table>
       </div>
 
-      <section class="resource-upload-section" id="resource-upload-section" aria-labelledby="resource-upload-title">
-        <div class="resource-upload-section__heading">
-          <div>
-            <span class="faculty-directory__eyebrow">File management</span>
-            <h2 id="resource-upload-title">Add Resources</h2>
-            <p>Upload new programme documents after reviewing the current resource library.</p>
+      ${canUpload ? `
+        <section class="resource-upload-section" aria-labelledby="resource-upload-title">
+          <div class="resource-upload-section__heading">
+            <div>
+              <span class="faculty-directory__eyebrow">Firebase Storage</span>
+              <h2 id="resource-upload-title">Add Shared Resources</h2>
+              <p>Files and versioned metadata are available to every authenticated participant.</p>
+            </div>
+            <button class="btn btn--primary" id="btn-upload" type="button">Add Shared File</button>
           </div>
-          <div id="resource-upload-action"></div>
-        </div>
-      </section>
+          <div class="upload-zone" id="upload-zone" role="button" tabindex="0">
+            <div class="upload-zone__icon">FILE</div>
+            <div class="upload-zone__text">Drag and drop files here, or click to browse</div>
+            <div class="upload-zone__hint">PDF, DOCX, XLSX and PPTX files up to 25 MB.</div>
+            <input id="resource-file-input" type="file" accept=".pdf,.docx,.xlsx,.pptx" multiple hidden>
+          </div>
+        </section>
+      ` : ''}
     </div>
   `;
 }, () => {
@@ -137,192 +101,125 @@ App.registerPage('resources', () => {
   const searchInput = document.getElementById('res-search');
   const fileInput = document.getElementById('resource-file-input');
   const uploadZone = document.getElementById('upload-zone');
-  const uploadSection = document.getElementById('resource-upload-section');
-  const uploadAction = document.getElementById('resource-upload-action');
   const uploadButton = document.getElementById('btn-upload');
   let activeCategory = 'all';
-
-  uploadAction.appendChild(uploadButton);
-  uploadSection.appendChild(uploadZone);
 
   function applyFilters() {
     const query = searchInput.value.trim().toLowerCase();
     let visible = 0;
-
     tableBody.querySelectorAll('tr').forEach(row => {
-      const categoryMatches = activeCategory === 'all' || row.dataset.category === activeCategory;
-      const searchMatches = row.textContent.toLowerCase().includes(query);
-      const show = categoryMatches && searchMatches;
+      const show = (activeCategory === 'all' || row.dataset.category === activeCategory)
+        && row.textContent.toLowerCase().includes(query);
       row.style.display = show ? '' : 'none';
       if (show) visible += 1;
     });
-
     document.getElementById('res-count').textContent = `${visible} resource${visible === 1 ? '' : 's'}`;
   }
 
-  function openPicker() {
-    fileInput.click();
-  }
+  async function uploadFiles(files) {
+    if (!Auth.isAdmin || !Auth.isAdmin()) return;
+    if (!window.FirebaseStorage) {
+      Notifications.toast('Storage Unavailable', 'Firebase Storage is not configured yet.', 'error');
+      return;
+    }
 
-  function addLocalFiles(files) {
-    [...files].forEach(file => {
+    let uploadedCount = 0;
+    let failedCount = 0;
+    for (const file of [...files]) {
       if (file.size > 25 * 1024 * 1024) {
-        Notifications.toast('File too large', `${file.name} exceeds the 25 MB limit.`, 'error');
-        return;
+        Notifications.toast('File Too Large', `${file.name} exceeds 25 MB.`, 'error');
+        continue;
       }
-
       const extension = file.name.split('.').pop().toLowerCase();
       const type = extension === 'pdf' ? 'pdf' : extension === 'xlsx' ? 'sheet' : 'doc';
-      const resource = {
-        id: `local-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        name: file.name,
-        file: URL.createObjectURL(file),
-        type,
-        size: formatFileSize(file.size),
-        category: 'Local',
-        uploaded: new Date().toISOString().slice(0, 10),
-        author: 'You',
-        isLocal: true
-      };
+      const id = `resource-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, '-');
+      const storagePath = `resources/${id}/${safeName}`;
 
-      tableBody.insertAdjacentHTML('afterbegin', resourceRow(resource));
-    });
-
-    if (files.length) {
-      Notifications.toast('Files ready', 'Your selected files can now be downloaded from this page.', 'success');
-      bindActionButtons();
-      applyFilters();
+      try {
+        const ref = window.FirebaseStorage.ref(storagePath);
+        await ref.put(file, { contentType: file.type || 'application/octet-stream' });
+        const downloadUrl = await ref.getDownloadURL();
+        await SharedData.save('resources', {
+          id,
+          name: file.name,
+          file: downloadUrl,
+          storagePath,
+          type,
+          size: formatFileSize(file.size),
+          category: 'Uploaded',
+          uploaded: new Date().toISOString().slice(0, 10),
+          author: Auth.currentUser().name || Auth.currentUser().username || 'Administrator'
+        }, 0);
+        uploadedCount += 1;
+      } catch (error) {
+        failedCount += 1;
+        Notifications.toast('Upload Failed', `${file.name}: ${error.message || 'Unable to upload.'}`, 'error');
+      }
     }
+    if (uploadedCount) {
+      Notifications.toast('Upload Complete', `${uploadedCount} shared file${uploadedCount === 1 ? '' : 's'} uploaded successfully.`, 'success');
+    } else if (failedCount) {
+      Notifications.toast('No Files Uploaded', 'Firebase Storage must be enabled for this project before uploads can succeed.', 'error');
+    }
+    App.navigate('resources');
   }
 
   async function shareResource(button) {
     const absoluteUrl = new URL(button.dataset.file, window.location.href).href;
-    const shareData = { title: button.dataset.name, text: button.dataset.name, url: absoluteUrl };
-
     try {
-      if (navigator.share && !absoluteUrl.startsWith('blob:')) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(absoluteUrl);
-        Notifications.toast('Link copied', 'The resource link is ready to share.', 'success');
-      }
+      if (navigator.share) await navigator.share({ title: button.dataset.name, url: absoluteUrl });
+      else await navigator.clipboard.writeText(absoluteUrl);
+      Notifications.toast('Link Ready', 'The resource link is ready to share.', 'success');
     } catch (error) {
-      if (error.name !== 'AbortError') {
-        Notifications.toast('Unable to share', 'Download the file and share it from your device.', 'error');
-      }
+      if (error.name !== 'AbortError') Notifications.toast('Unable to Share', 'Download the file and share it from your device.', 'error');
     }
   }
 
   async function deleteResource(button) {
-    if (!Auth.isAdmin || !Auth.isAdmin()) {
-      Notifications.toast('Admin access required', 'Only an administrator can delete resources.', 'error');
-      return;
-    }
-
-    const confirmed = window.confirm(`Delete "${button.dataset.name}" from the Resources list?`);
-    if (!confirmed) return;
-
-    const row = button.closest('tr');
+    if (!window.confirm(`Move "${button.dataset.name}" to Restore & Audit?`)) return;
     button.disabled = true;
-
     try {
-      if (button.dataset.local === 'true') {
-        URL.revokeObjectURL(button.dataset.file);
-      } else {
-        rememberDeletedResource(button.dataset.id);
-        if (window.FirebaseDb && window.firebase) {
-          const currentUser = Auth.currentUser();
-          try {
-            await window.FirebaseDb.collection('resourceDeletions').doc(button.dataset.id).set({
-              resourceId: button.dataset.id,
-              name: button.dataset.name,
-              file: button.dataset.file,
-              deletedBy: currentUser.uid,
-              deletedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-          } catch (error) {
-            console.warn('Resource deletion saved locally:', error && error.message ? error.message : error);
-          }
-        }
-      }
-
-      row.remove();
-      applyFilters();
-      Notifications.toast('Resource deleted', `${button.dataset.name} was removed from the Resources list.`, 'success');
+      await SharedData.softDelete('resources', button.dataset.id, Number(button.dataset.revision));
+      Notifications.toast('Moved to Restore', `${button.dataset.name} can be restored later.`, 'success');
+      App.navigate('resources');
     } catch (error) {
       button.disabled = false;
-      Notifications.toast('Delete failed', error.message || 'The resource could not be deleted.', 'error');
+      Notifications.toast('Delete Failed', error.message || 'The resource could not be deleted.', 'error');
     }
   }
 
-  async function loadDeletedResources() {
-    const deletedIds = localDeletedResourceIds();
-
-    if (window.FirebaseDb) {
-      try {
-        const snapshot = await window.FirebaseDb.collection('resourceDeletions').get();
-        snapshot.docs.forEach(doc => deletedIds.add(doc.id));
-      } catch (error) {
-        console.warn('Using locally saved resource deletions:', error && error.message ? error.message : error);
-      }
-    }
-
-    tableBody.querySelectorAll('tr').forEach(row => {
-      if (deletedIds.has(row.dataset.resourceId)) row.remove();
+  document.querySelectorAll('.res-cat').forEach(button => button.addEventListener('click', () => {
+    document.querySelectorAll('.res-cat').forEach(item => {
+      item.classList.remove('btn--secondary');
+      item.classList.add('btn--outline');
     });
+    button.classList.remove('btn--outline');
+    button.classList.add('btn--secondary');
+    activeCategory = button.dataset.cat;
     applyFilters();
-  }
-
-  function bindActionButtons() {
-    document.querySelectorAll('.resource-share:not([data-bound])').forEach(button => {
-      button.dataset.bound = 'true';
-      button.addEventListener('click', () => shareResource(button));
-    });
-    document.querySelectorAll('.resource-delete:not([data-bound])').forEach(button => {
-      button.dataset.bound = 'true';
-      button.addEventListener('click', () => deleteResource(button));
-    });
-  }
-
-  document.querySelectorAll('.res-cat').forEach(button => {
-    button.addEventListener('click', () => {
-      document.querySelectorAll('.res-cat').forEach(categoryButton => {
-        categoryButton.classList.remove('btn--secondary');
-        categoryButton.classList.add('btn--outline');
-      });
-      button.classList.remove('btn--outline');
-      button.classList.add('btn--secondary');
-      activeCategory = button.dataset.cat;
-      applyFilters();
-    });
-  });
-
+  }));
   searchInput.addEventListener('input', applyFilters);
-  document.getElementById('btn-upload').addEventListener('click', openPicker);
-  uploadZone.addEventListener('click', event => {
-    if (event.target !== fileInput) openPicker();
-  });
-  uploadZone.addEventListener('keydown', event => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      openPicker();
-    }
-  });
-  uploadZone.addEventListener('dragover', event => {
-    event.preventDefault();
-    uploadZone.classList.add('upload-zone--active');
-  });
-  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('upload-zone--active'));
-  uploadZone.addEventListener('drop', event => {
-    event.preventDefault();
-    uploadZone.classList.remove('upload-zone--active');
-    addLocalFiles(event.dataTransfer.files);
-  });
-  fileInput.addEventListener('change', () => {
-    addLocalFiles(fileInput.files);
-    fileInput.value = '';
-  });
+  document.querySelectorAll('.resource-share').forEach(button => button.addEventListener('click', () => shareResource(button)));
+  document.querySelectorAll('.resource-delete').forEach(button => button.addEventListener('click', () => deleteResource(button)));
 
-  bindActionButtons();
-  loadDeletedResources();
+  if (uploadButton && fileInput && uploadZone) {
+    const openPicker = () => fileInput.click();
+    uploadButton.addEventListener('click', openPicker);
+    uploadZone.addEventListener('click', event => { if (event.target !== fileInput) openPicker(); });
+    uploadZone.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openPicker(); }
+    });
+    uploadZone.addEventListener('dragover', event => { event.preventDefault(); uploadZone.classList.add('upload-zone--active'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('upload-zone--active'));
+    uploadZone.addEventListener('drop', async event => {
+      event.preventDefault();
+      uploadZone.classList.remove('upload-zone--active');
+      await uploadFiles(event.dataTransfer.files);
+    });
+    fileInput.addEventListener('change', async () => {
+      await uploadFiles(fileInput.files);
+      fileInput.value = '';
+    });
+  }
 });

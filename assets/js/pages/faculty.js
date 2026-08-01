@@ -33,38 +33,16 @@ const FacultyPage = (() => {
     };
   }
 
-  function ensureDirectoryData() {
-    const defaults = (window.DalhousieFacultyDirectory || []).map(normalizeEntry);
-
-    try {
-      if (localStorage.getItem(SEED_KEY) === 'complete') {
-        return CSVImport.getData('faculty').map(normalizeEntry);
-      }
-
-      const existing = CSVImport.getData('faculty').map(normalizeEntry);
-      const merged = [];
-      const seen = new Set();
-
-      defaults.concat(existing).forEach(entry => {
-        const key = identity(entry);
-        if (!entry.Name || seen.has(key)) return;
-        seen.add(key);
-        merged.push(entry);
-      });
-
-      CSVImport.importData('faculty', merged);
-      localStorage.setItem(SEED_KEY, 'complete');
-      return merged;
-    } catch (error) {
-      return defaults;
-    }
-  }
-
   function getFaculty() {
-    return ensureDirectoryData();
+    const shared = CSVImport.getData('faculty');
+    return (shared.length ? shared : (window.DalhousieFacultyDirectory || [])).map(entry => ({
+      ...normalizeEntry(entry),
+      _id: entry._id || entry.id || '',
+      _revision: Number(entry._revision || entry.revision || 0)
+    }));
   }
 
-  function saveFaculty() {
+  async function saveFaculty() {
     if (!Auth.isAdmin || !Auth.isAdmin()) return;
 
     const newEntry = {};
@@ -82,16 +60,19 @@ const FacultyPage = (() => {
     const editInput = document.getElementById('fac-edit-idx');
     const editIndex = editInput ? editInput.value : '';
 
-    if (editIndex !== '') {
-      existing[Number(editIndex)] = newEntry;
-      Notifications.toast('Updated', `${newEntry.Name} updated`, 'success');
-    } else {
-      existing.push(newEntry);
-      Notifications.toast('Added', `${newEntry.Name} added to faculty`, 'success');
+    try {
+      if (editIndex !== '') {
+        const current = existing[Number(editIndex)];
+        await SharedData.save('faculty', { ...newEntry, _id: current._id }, current._revision);
+        Notifications.toast('Updated', `${newEntry.Name} updated`, 'success');
+      } else {
+        await SharedData.save('faculty', newEntry, 0);
+        Notifications.toast('Added', `${newEntry.Name} added to faculty`, 'success');
+      }
+      App.navigate('faculty');
+    } catch (error) {
+      Notifications.toast('Save Failed', error.message || 'The faculty record could not be saved.', 'error');
     }
-
-    CSVImport.importData('faculty', existing);
-    App.navigate('faculty');
   }
 
   function cancelForm() {
@@ -129,16 +110,19 @@ const FacultyPage = (() => {
     });
   }
 
-  function deleteFaculty(index) {
+  async function deleteFaculty(index) {
     if (!Auth.isAdmin || !Auth.isAdmin()) return;
     const existing = getFaculty();
     const name = existing[index] ? existing[index].Name : 'this member';
 
     if (confirm(`Delete ${name} from the faculty directory?`)) {
-      existing.splice(index, 1);
-      CSVImport.importData('faculty', existing);
-      Notifications.toast('Deleted', `${name} removed`, 'info');
-      App.navigate('faculty');
+      try {
+        await SharedData.softDelete('faculty', existing[index]._id, existing[index]._revision);
+        Notifications.toast('Moved to Restore', `${name} can be restored by an administrator.`, 'info');
+        App.navigate('faculty');
+      } catch (error) {
+        Notifications.toast('Delete Failed', error.message || 'The faculty record could not be deleted.', 'error');
+      }
     }
   }
 

@@ -3,7 +3,13 @@
    ============================================ */
 
 App.registerPage('tracker', () => {
-  const fellows = CSVImport.getData('fellows');
+  const progressByFellow = new Map(
+    CSVImport.getData('progress').map(item => [String(item.FellowId || item.ID || item.Name || ''), item])
+  );
+  const fellows = CSVImport.getData('fellows').map(fellow => ({
+    ...fellow,
+    ...(progressByFellow.get(String(fellow.ID || fellow.FellowId || fellow.Name || '')) || {})
+  }));
 
   return `
     <div class="page-content">

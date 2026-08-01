@@ -77,7 +77,8 @@ const App = (() => {
       meetings: 'Meetings',
       tracker: 'Progress Tracker',
       faculty: 'Faculty Directory',
-      resources: 'Resources'
+      resources: 'Resources',
+      restore: 'Restore & Audit'
     };
     bc.textContent = labels[pageName] || pageName;
   }

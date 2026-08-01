@@ -27,4 +27,5 @@
   window.FirebaseApp = firebase.app();
   window.FirebaseAuth = firebase.auth();
   window.FirebaseDb = firebase.firestore();
+  window.FirebaseStorage = typeof firebase.storage === 'function' ? firebase.storage() : null;
 })();

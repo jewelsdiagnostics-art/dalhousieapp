@@ -58,13 +58,22 @@ const CSVImport = (() => {
   }
 
   /* ---- Import data for a type ---- */
-  function importData(type, rows) {
+  async function importData(type, rows) {
     if (!_store[type]) _store[type] = [];
     _store[type] = rows;
     _save();
+    if (typeof SharedData !== 'undefined' && SharedData.isReady()) {
+      await SharedData.replaceCollection(type, rows);
+      _store[type] = SharedData.getData(type);
+      _save();
+    }
+    return _store[type];
   }
 
   function getData(type) {
+    if (typeof SharedData !== 'undefined' && SharedData.isReady()) {
+      return SharedData.getData(type);
+    }
     return _store[type] || [];
   }
 
@@ -73,7 +82,10 @@ const CSVImport = (() => {
     return d && d.length > 0;
   }
 
-  function clearData(type) {
+  async function clearData(type) {
+    if (typeof SharedData !== 'undefined' && SharedData.isReady()) {
+      await SharedData.replaceCollection(type, []);
+    }
     delete _store[type];
     _save();
   }
@@ -148,8 +160,9 @@ const CSVImport = (() => {
     /* ---- Clear button ---- */
     const clearBtn = container.querySelector('.csv-clear-btn');
     if (clearBtn) {
-      clearBtn.addEventListener('click', () => {
-        clearData(type);
+      clearBtn.addEventListener('click', async () => {
+        clearBtn.disabled = true;
+        await clearData(type);
         if (onImported) onImported([]);
         renderUploadUI(containerId, type, onImported);
       });
@@ -163,14 +176,19 @@ const CSVImport = (() => {
     }
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const rows = parseCSV(e.target.result);
       if (rows.length === 0) {
         Notifications.toast('Empty File', 'No data rows found in CSV', 'warning');
         return;
       }
 
-      importData(type, rows);
+      try {
+        await importData(type, rows);
+      } catch (error) {
+        Notifications.toast('Import Failed', error.message || 'The shared data could not be updated.', 'error');
+        return;
+      }
       Notifications.toast('Import Successful', `${rows.length} ${type} records imported`, 'success');
 
       // Show preview
@@ -190,7 +208,7 @@ const CSVImport = (() => {
         `;
       }
 
-      if (onImported) onImported(rows);
+      if (onImported) await onImported(rows);
     };
     reader.readAsText(file);
   }

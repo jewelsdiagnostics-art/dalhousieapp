@@ -642,6 +642,55 @@
   font-size: 0.85rem;
 }
 
+.restore-audit-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.restore-audit-item {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.restore-audit-item p,
+.restore-audit-item time {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.restore-audit-item__action {
+  padding: 0.35rem 0.5rem;
+  color: var(--text-primary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.restore-audit-item__action--delete { color: var(--error); }
+.restore-audit-item__action--restore { color: var(--success); }
+.restore-audit-item__action--create { color: var(--secondary); }
+
+@media (max-width: 700px) {
+  .restore-audit-item {
+    grid-template-columns: 70px 1fr;
+  }
+  .restore-audit-item time {
+    grid-column: 2;
+  }
+}
+
 .faculty-admin-tools {
   padding-top: var(--space-8);
   margin-top: var(--space-8);

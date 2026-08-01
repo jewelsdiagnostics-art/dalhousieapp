@@ -1,0 +1,25 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == "admin@dalhousie.app"
+        || firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == "admin"
+      );
+    }
+
+    match /resources/{resourceId}/{fileName} {
+      allow read: if isSignedIn();
+      allow create, update: if isAdmin()
+        && request.resource.size < 25 * 1024 * 1024
+        && request.resource.contentType.matches(
+          'application/pdf|application/vnd.openxmlformats-officedocument.*|application/msword|application/vnd.ms-.*'
+        );
+      allow delete: if isAdmin();
+    }
+  }
+}

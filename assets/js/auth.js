@@ -176,6 +176,7 @@ const Auth = (() => {
       contactNumber: data.contactNumber || '',
       mainTopics: Array.isArray(data.mainTopics) ? data.mainTopics : [],
       tutorials: Array.isArray(data.tutorials) ? data.tutorials : [],
+      revision: Number(data.revision || 0),
       createdAt: data.createdAt || null,
       updatedAt: data.updatedAt || null
     };
@@ -206,7 +207,7 @@ const Auth = (() => {
   }
 
   async function _saveProfile(profile) {
-    const payload = {
+    const basePayload = {
       uid: profile.uid,
       username: profile.username || _slugify(profile.email || ''),
       usernameLower: _normalize(profile.usernameLower || profile.username || _slugify(profile.email || '')),
@@ -219,19 +220,52 @@ const Auth = (() => {
       contactNumber: profile.contactNumber || '',
       mainTopics: Array.isArray(profile.mainTopics) ? profile.mainTopics : [],
       tutorials: Array.isArray(profile.tutorials) ? profile.tutorials : [],
-      createdAt: profile.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
+    const userRef = _userDoc(basePayload.uid);
+    const auditRef = _db().collection('auditLogs').doc();
+    let savedPayload;
 
-    await _userDoc(payload.uid).set(payload, { merge: true });
-    return _profileFromDoc({ exists: true, id: payload.uid, data: () => payload });
+    await _db().runTransaction(async transaction => {
+      const snapshot = await transaction.get(userRef);
+      const before = snapshot.exists ? snapshot.data() : null;
+      const currentRevision = Number((before && before.revision) || 0);
+      const expectedRevision = Number(profile.revision || 0);
+      const hasExpectedRevision = profile.revision !== undefined && profile.revision !== null;
+      if (snapshot.exists && hasExpectedRevision && expectedRevision !== currentRevision) {
+        throw new Error(`This user profile changed from revision ${expectedRevision} to ${currentRevision}. Reload and try again.`);
+      }
+
+      const revision = currentRevision + 1;
+      const actor = _auth().currentUser;
+      const actorProfile = _currentUser || {};
+      savedPayload = {
+        ...basePayload,
+        revision,
+        createdAt: before && before.createdAt ? before.createdAt : (profile.createdAt || new Date().toISOString())
+      };
+
+      transaction.set(userRef, savedPayload);
+      transaction.set(auditRef, {
+        entityType: 'users',
+        entityId: basePayload.uid,
+        action: snapshot.exists ? 'update' : 'create',
+        revision,
+        actorId: actor.uid,
+        actorName: actorProfile.name || actorProfile.username || actor.email || 'User',
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        before,
+        after: savedPayload
+      });
+    });
+
+    return _profileFromDoc({ exists: true, id: savedPayload.uid, data: () => savedPayload });
   }
 
   async function _disableProfile(uid) {
-    await _userDoc(uid).set({
-      user_status: 'DELETED',
-      updatedAt: new Date().toISOString()
-    }, { merge: true });
+    const profile = await _loadProfileByUid(uid);
+    if (!profile) throw new Error('User not found');
+    await _saveProfile({ ...profile, user_status: 'DELETED' });
   }
 
   function _secondaryAuth() {
@@ -291,9 +325,11 @@ const Auth = (() => {
         mainTopics: _curriculumDefaults().groups,
         tutorials: _curriculumDefaults().tutorials
       };
-      _saveProfile(profile).catch(error => {
+      try {
+        profile = await _saveProfile(profile);
+      } catch (error) {
         console.warn('Profile sync skipped during hydrate:', error && error.message ? error.message : error);
-      });
+      }
     }
 
     if (_normalize(profile.user_status) === 'deleted') {
@@ -310,11 +346,9 @@ const Auth = (() => {
     if (_bootstrapPromise) return _bootstrapPromise;
 
     _bootstrapPromise = (async () => {
-      const localFaculty = _readLocalFacultySession();
-      if (localFaculty) {
-        _currentUser = localFaculty;
-        _users = [localFaculty];
-      }
+      // Shared records require a real Firebase identity; legacy local-only
+      // faculty sessions are deliberately not restored.
+      localStorage.removeItem(FACULTY_SESSION_KEY);
 
       if (!_hasFirebase()) {
         console.warn('Firebase is not available yet.');
@@ -334,7 +368,7 @@ const Auth = (() => {
             if (user) {
               localStorage.removeItem(FACULTY_SESSION_KEY);
               await _hydrateFirebaseUser(user);
-            } else if (!_readLocalFacultySession()) {
+            } else {
               _currentUser = null;
               _users = [];
             }
@@ -426,16 +460,15 @@ const Auth = (() => {
     }
 
     try {
-      if (_hasFirebase() && _auth().currentUser) {
-        await _auth().signOut();
+      const savedProfile = await _loadProfileByUsername(source.id);
+      if (!savedProfile || !savedProfile.email) {
+        return { success: false, error: 'This faculty account has not been activated by the administrator yet.' };
       }
-      const profile = _createLocalFacultyProfile(source);
-      _saveLocalFacultySession(profile);
-      _currentUser = profile;
-      _users = [profile];
+      const credential = await _auth().signInWithEmailAndPassword(savedProfile.email, String(password));
+      const profile = await _hydrateFirebaseUser(credential.user);
       return { success: true, user: profile };
     } catch (error) {
-      return { success: false, error: error.message || 'Unable to start the faculty session.' };
+      return { success: false, error: error.message || 'Invalid faculty password.' };
     }
   }
 
@@ -479,16 +512,12 @@ const Auth = (() => {
         mainTopics: [...new Set(selectedMainTopics)],
         tutorials: [...new Set(selectedTutorials)]
       };
-      _saveProfile(profile).catch(error => {
-        console.warn('Profile sync skipped during signup:', error && error.message ? error.message : error);
-      });
-      _currentUser = profile;
-      _refreshUsersCache().catch(error => {
-        console.warn('User cache refresh skipped during signup:', error && error.message ? error.message : error);
-      });
+      const savedProfile = await _saveProfile(profile);
+      _currentUser = savedProfile;
+      await _refreshUsersCache();
       return {
         success: true,
-        user: profile,
+        user: savedProfile,
         generatedPassword: !rawPassword,
         tempPassword: !rawPassword ? password : ''
       };
@@ -609,12 +638,12 @@ const Auth = (() => {
       return { success: true, user: nextProfile };
     }
 
-    await _saveProfile(nextProfile);
+    const savedProfile = await _saveProfile(nextProfile);
     if (_currentUser && _currentUser.uid === nextProfile.uid) {
-      _currentUser = nextProfile;
+      _currentUser = savedProfile;
     }
     await _refreshUsersCache();
-    return { success: true, user: nextProfile };
+    return { success: true, user: savedProfile };
   }
 
   function currentUser() {

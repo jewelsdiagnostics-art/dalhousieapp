@@ -240,7 +240,7 @@ App.registerPage('dashboard', () => {
         </div>
         <div class="section-card__body">
           <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:var(--space-4);">
-            Download the template CSV for each data type, fill in your records, and upload below. Data persists in your browser.
+            Download a template, complete it, and upload below. Records are revisioned and shared through Firestore.
           </p>
           <div id="csv-import-members"></div>
           <div id="csv-import-fellows"></div>

@@ -51,9 +51,11 @@ service cloud.firestore {
           "contactNumber",
           "mainTopics",
           "tutorials",
+          "revision",
           "createdAt",
           "updatedAt"
         ])
+        && request.resource.data.revision == 1
       );
 
       allow update: if isAdmin() || (
@@ -64,6 +66,10 @@ service cloud.firestore {
         && request.resource.data.username == resource.data.username
         && request.resource.data.usernameLower == resource.data.usernameLower
         && request.resource.data.createdAt == resource.data.createdAt
+        && (
+          (!("revision" in resource.data) && request.resource.data.revision == 1)
+          || request.resource.data.revision == resource.data.revision + 1
+        )
         && request.resource.data.keys().hasOnly([
           "uid",
           "username",
@@ -77,6 +83,7 @@ service cloud.firestore {
           "contactNumber",
           "mainTopics",
           "tutorials",
+          "revision",
           "createdAt",
           "updatedAt"
         ])
@@ -101,6 +108,77 @@ service cloud.firestore {
 
       allow update: if false;
       allow delete: if isAdmin();
+    }
+
+    match /{collectionName}/{recordId} {
+      allow read: if isSignedIn()
+        && collectionName in [
+          "members",
+          "faculty",
+          "fellows",
+          "progress",
+          "meetings",
+          "minutes",
+          "resources"
+        ];
+
+      allow create: if isAdmin()
+        && collectionName in [
+          "members",
+          "faculty",
+          "fellows",
+          "progress",
+          "meetings",
+          "minutes",
+          "resources"
+        ]
+        && request.resource.data.revision == 1
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.updatedBy == request.auth.uid;
+
+      allow update: if isAdmin()
+        && collectionName in [
+          "members",
+          "faculty",
+          "fellows",
+          "progress",
+          "meetings",
+          "minutes",
+          "resources"
+        ]
+        && request.resource.data.revision == resource.data.revision + 1
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.updatedBy == request.auth.uid;
+
+      // Shared records use soft deletion so they remain recoverable.
+      allow delete: if false;
+    }
+
+    match /auditLogs/{auditId} {
+      allow read: if isAdmin();
+      allow create: if (
+          isAdmin()
+          || (isSignedIn()
+            && request.resource.data.entityType == "users"
+            && request.resource.data.entityId == request.auth.uid)
+        )
+        && request.resource.data.actorId == request.auth.uid
+        && request.resource.data.revision is int
+        && request.resource.data.revision > 0
+        && request.resource.data.action in ["create", "update", "delete", "restore"]
+        && request.resource.data.keys().hasOnly([
+          "entityType",
+          "entityId",
+          "action",
+          "revision",
+          "actorId",
+          "actorName",
+          "timestamp",
+          "before",
+          "after"
+        ]);
+      allow update, delete: if false;
     }
   }
 }
