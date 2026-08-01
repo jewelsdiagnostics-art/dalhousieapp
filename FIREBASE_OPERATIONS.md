@@ -27,14 +27,13 @@ npx --yes firebase-tools@latest deploy --only firestore:rules,storage --project 
 
 ## Backups And Point-In-Time Recovery
 
-Firebase Console currently reports this project on the no-cost Spark plan. Storage, scheduled backups, and point-in-time recovery cannot be enabled until the project has a billing-enabled plan.
+The project uses the Blaze plan. The following managed recovery settings are active for the `(default)` Firestore database:
 
-After the owner intentionally upgrades the project:
+- Point-in-time recovery: 7 days.
+- Daily backups: 14-day retention.
+- Weekly backups: every Sunday with 84-day retention.
+- Default Storage bucket: `gs://dalhousie-cc176.firebasestorage.app`.
 
-1. Open Firestore Database > **Disaster recovery**.
-2. Enable point-in-time recovery for the `(default)` database.
-3. Add a daily backup schedule and choose a retention period appropriate for the programme's data policy.
-4. Add a weekly backup with a longer retention period if required.
-5. Test restoration into a separate database before relying on the backup policy.
+Review these settings periodically in Firestore Database > **Disaster recovery**. Test restoration into a separate database before relying on the backup policy for an emergency.
 
-Do not upgrade billing or change retention without the project owner's approval. Audit logs and soft deletion remain active independently of the paid recovery features.
+Do not change billing or retention without the project owner's approval. Audit logs and soft deletion remain active independently of the managed recovery features.

@@ -60,9 +60,9 @@ const RestorePage = (() => {
         </div>
 
         <section class="section-card" style="margin-bottom:var(--space-6);">
-          <div class="section-card__header"><span class="section-card__title">Cloud Recovery</span><span class="badge badge--warning">Project setting</span></div>
+          <div class="section-card__header"><span class="section-card__title">Cloud Recovery</span><span class="badge badge--success">Active</span></div>
           <div class="section-card__body">
-            <p style="margin:0;color:var(--text-secondary);">Audit history and record restoration are active. Scheduled backups and point-in-time recovery must also be enabled for the Firestore database in Firebase Console; these services require a billing-enabled Firebase plan.</p>
+            <p style="margin:0;color:var(--text-secondary);">Point-in-time recovery retains seven days of versions. Daily backups are retained for 14 days, and Sunday weekly backups are retained for 84 days. Audit history and administrator restoration remain available in this portal.</p>
           </div>
         </section>
 
