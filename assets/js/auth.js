@@ -77,6 +77,26 @@ const Auth = (() => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || '').trim());
   }
 
+  function _loginEmailForUsername(username) {
+    return `${_slugify(username)}@dalhousie.app`;
+  }
+
+  function _facultyLoginError(error) {
+    const code = String(error && error.code ? error.code : '');
+    if ([
+      'auth/invalid-credential',
+      'auth/invalid-login-credentials',
+      'auth/user-not-found',
+      'auth/wrong-password'
+    ].includes(code)) {
+      return 'This faculty account is not activated yet, or the assigned password is incorrect. Contact the administrator.';
+    }
+    if (code === 'auth/too-many-requests') {
+      return 'Too many sign-in attempts. Wait a few minutes, then try the assigned password again.';
+    }
+    return error && error.message ? error.message : 'Unable to sign in to this faculty account.';
+  }
+
   function _validatePasswordStrength(password) {
     const issues = [];
     if ((password || '').length < 8) issues.push('at least 8 characters');
@@ -426,17 +446,9 @@ const Auth = (() => {
       if (_normalize(loginName) === 'admin') {
         email = 'admin@dalhousie.app';
       } else {
-        const profile = await Promise.race([
-          _loadProfileByUsername(loginName),
-          _wait(1800).then(() => null)
-        ]).catch(() => null);
-        if (!profile || _normalize(profile.user_status) === 'deleted') {
-          return {
-            success: false,
-            error: 'Username lookup is taking too long right now. Try signing in with your email address instead.'
-          };
-        }
-        email = profile.email;
+        // Faculty usernames map to private synthetic Auth addresses, avoiding
+        // an unauthenticated Firestore lookup that security rules must reject.
+        email = _loginEmailForUsername(loginName);
       }
     }
 
@@ -447,7 +459,7 @@ const Auth = (() => {
       return { success: true, user };
     } catch (error) {
       console.error('Auth.login error', error);
-      return { success: false, error: error && error.message ? error.message : 'Invalid username or password' };
+      return { success: false, error: _facultyLoginError(error) };
     }
   }
 
@@ -460,15 +472,11 @@ const Auth = (() => {
     }
 
     try {
-      const savedProfile = await _loadProfileByUsername(source.id);
-      if (!savedProfile || !savedProfile.email) {
-        return { success: false, error: 'This faculty account has not been activated by the administrator yet.' };
-      }
-      const credential = await _auth().signInWithEmailAndPassword(savedProfile.email, String(password));
+      const credential = await _auth().signInWithEmailAndPassword(_loginEmailForUsername(source.id), String(password));
       const profile = await _hydrateFirebaseUser(credential.user);
       return { success: true, user: profile };
     } catch (error) {
-      return { success: false, error: error.message || 'Invalid faculty password.' };
+      return { success: false, error: _facultyLoginError(error) };
     }
   }
 

@@ -8,6 +8,8 @@ App.registerPage('users', () => {
   }
 
   const users = Auth.getUsers();
+  const activeUsernames = new Set(users.map(user => String(user.username || '').toLowerCase()));
+  const facultyProfiles = Array.isArray(window.DalhousieFacultyProfiles) ? window.DalhousieFacultyProfiles : [];
 
   return `
     <div class="page-content">
@@ -32,8 +34,8 @@ App.registerPage('users', () => {
               <input type="text" class="input" id="new-user-username" placeholder="jane.doe">
             </div>
             <div class="form-group">
-              <label class="form-label">Email Address</label>
-              <input type="email" class="input" id="new-user-email" placeholder="jane.doe@example.com">
+              <label class="form-label">Email Address (optional)</label>
+              <input type="email" class="input" id="new-user-email" placeholder="Leave blank for username@dalhousie.app">
             </div>
             <div class="form-group">
               <label class="form-label">Institution Name</label>
@@ -63,9 +65,38 @@ App.registerPage('users', () => {
             </div>
           </div>
 
+          <p style="font-size:0.8rem;color:var(--text-secondary);margin-top:var(--space-2);">For a faculty-directory login, use the directory username shown in the activation guide and leave email blank. Only the password assigned here will work.</p>
           <div id="user-form-error" style="display:none;color:var(--error);font-size:0.8rem;margin-top:var(--space-2);"></div>
           <div style="margin-top:var(--space-4);">
             <button class="btn btn--primary" onclick="UsersPage.createUser()">+ Create User</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card" style="margin-bottom:var(--space-5);">
+        <div class="section-card__header">
+          <span class="section-card__title">Faculty Account Activation</span>
+          <span class="badge badge--secondary">${facultyProfiles.length} directory profiles</span>
+        </div>
+        <div class="section-card__body" style="padding:0;">
+          <div class="table-container" style="border:0;box-shadow:none;border-radius:0;">
+            <table class="data-table">
+              <thead><tr><th>Faculty Name</th><th>Required Username</th><th>Login Status</th><th>Action</th></tr></thead>
+              <tbody>${facultyProfiles.map(profile => {
+                const active = activeUsernames.has(String(profile.id).toLowerCase());
+                return `
+                  <tr>
+                    <td class="cell--name">${profile.name}</td>
+                    <td>${profile.id}</td>
+                    <td><span class="badge badge--${active ? 'success' : 'warning'}">${active ? 'Activated' : 'Not activated'}</span></td>
+                    <td>${active
+                      ? '<span class="cell--muted">Account ready</span>'
+                      : `<button class="btn btn--outline btn--sm" onclick="UsersPage.prepareFaculty('${profile.id}')">Prepare Account</button>`}
+                    </td>
+                  </tr>
+                `;
+              }).join('')}</tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -123,6 +154,18 @@ App.registerPage('users', () => {
 /* ---- Global functions for onclick handlers ---- */
 const UsersPage = {
   _resetTarget: '',
+
+  prepareFaculty(profileId) {
+    const profile = (window.DalhousieFacultyProfiles || []).find(item => item.id === profileId);
+    if (!profile) return;
+    document.getElementById('new-user-name').value = profile.name;
+    document.getElementById('new-user-username').value = profile.id;
+    document.getElementById('new-user-email').value = '';
+    document.getElementById('new-user-role').value = 'faculty';
+    document.getElementById('new-user-password').value = '';
+    document.getElementById('user-form-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('new-user-password').focus();
+  },
 
   _collectSelections() {
     const selectedMainTopics = [...document.querySelectorAll('.admin-group-master:checked')].map(el => el.dataset.groupId);

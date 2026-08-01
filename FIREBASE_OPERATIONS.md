@@ -19,6 +19,18 @@ Project: `dalhousie-cc176`
 - Audit records cannot be updated or deleted.
 - Storage accepts authenticated reads and administrator-only PDF/Office uploads up to 25 MB.
 
+## Faculty Login Activation
+
+Faculty directory entries are not automatically authentication accounts. An administrator activates each person from **User Management > Faculty Account Activation**:
+
+1. Select **Prepare Account** beside the faculty member.
+2. Keep the prepared directory username unchanged.
+3. Leave email blank so Firebase uses the private `username@dalhousie.app` sign-in address.
+4. Assign a unique password of at least eight characters and create the user.
+5. Give that password directly to the faculty member through an appropriate private channel.
+
+The faculty member then selects their name on the portal and enters the assigned password. Arbitrary passwords do not work, and passwords are stored by Firebase Authentication rather than in GitHub or Firestore.
+
 Deploy both rule files after authenticating the Firebase CLI:
 
 ```powershell
