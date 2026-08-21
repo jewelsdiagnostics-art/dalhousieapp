@@ -1,0 +1,8 @@
+local.properties
+release-signing.properties
+*.jks
+.idea/
+.gradle/
+build/
+**/build/
+app/google-services.json

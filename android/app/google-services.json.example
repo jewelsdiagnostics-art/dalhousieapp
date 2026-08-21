@@ -1,0 +1,3 @@
+{
+  "note": "Download google-services.json from Firebase Console after you register the Android app, then place it beside this example file as app/google-services.json."
+}
