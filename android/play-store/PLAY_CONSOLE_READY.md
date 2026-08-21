@@ -35,43 +35,7 @@ keytool -genkeypair -v -keystore dalhousie-upload.jks -alias upload -keyalg RSA 
 
 ## 2. Firebase Android registration
 
-### In Firebase Console
-
-1. Open Firebase Console for project `dalhousie-cc176`.
-2. Add a new Android app.
-3. Use this package name:
-
-`com.dalhousie.app`
-
-4. Add a nickname like:
-
-`Dalhousie Companion Android`
-
-5. Download the generated `google-services.json`.
-6. Place it here:
-
-`android/app/google-services.json`
-
-### Firebase services to enable
-
-- Authentication
-- Firestore
-- Storage
-- Cloud Messaging
-
-### Recommended shared collections
-
-- `users`
-- `faculty`
-- `meetings`
-- `minutes`
-- `resources`
-- `notifications`
-- `auditLogs`
-
-### Data sync rule
-
-Use the same Firebase project for the web app and Android app so both clients read and write the same records.
+See `android/play-store/FIREBASE_ANDROID_SETUP.md` for the exact Firebase Console fields and service checklist.
 
 ## 3. Play Store listing fields
 
@@ -137,4 +101,3 @@ Because the app uses sign-in, provide Google Play with:
 ## Verification note
 
 If Play Console is still under account verification, you can finish these steps now and upload the signed AAB as soon as verification clears.
-

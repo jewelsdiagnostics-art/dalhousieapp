@@ -56,3 +56,7 @@ See `release-signing.properties.example` for the fields you will need when creat
 For the exact steps to build the signed AAB, register the Android app in Firebase, and fill the Play Store listing fields, open:
 
 - `android/play-store/PLAY_CONSOLE_READY.md`
+
+For the Firebase-only registration fields, open:
+
+- `android/play-store/FIREBASE_ANDROID_SETUP.md`

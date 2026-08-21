@@ -1,4 +1,10 @@
-storeFile=path/to/upload-keystore.jks
+# Copy this file to `android/release-signing.properties` and fill in the values.
+# Keep the upload keystore and passwords private.
+#
+# `storeFile` should point to the .jks file you generated locally.
+# Use a relative path from the android/ folder or an absolute path.
+
+storeFile=path/to/dalhousie-upload.jks
 storePassword=change-me
 keyAlias=upload
 keyPassword=change-me
