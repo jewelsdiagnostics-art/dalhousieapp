@@ -50,3 +50,9 @@ It is intentionally separate from the web app and is meant to complement it, not
 ## Signing
 
 See `release-signing.properties.example` for the fields you will need when creating a release keystore.
+
+## Play Console ready pack
+
+For the exact steps to build the signed AAB, register the Android app in Firebase, and fill the Play Store listing fields, open:
+
+- `android/play-store/PLAY_CONSOLE_READY.md`
