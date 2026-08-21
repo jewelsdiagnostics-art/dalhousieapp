@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -37,8 +39,8 @@ android {
         create("release") {
             val signingFile = rootProject.file("release-signing.properties")
             if (signingFile.exists()) {
-                val props = java.util.Properties().apply {
-                    signingFile.inputStream().use(::load)
+                val props = Properties().apply {
+                    signingFile.inputStream().use { load(it) }
                 }
                 storeFile = file(props.getProperty("storeFile"))
                 storePassword = props.getProperty("storePassword")
