@@ -4,7 +4,8 @@ import android.net.Uri
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.QueryDocumentSnapshot
+import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.channels.awaitClose
@@ -16,6 +17,7 @@ interface AuthRepository {
     fun authState(): Flow<FirebaseUser?>
     fun currentUser(): FirebaseUser?
     suspend fun signIn(email: String, password: String)
+    suspend fun createAccount(email: String, password: String): FirebaseUser
     suspend fun signOut()
 }
 
@@ -37,6 +39,11 @@ class FirebaseAuthRepository(
         auth.signInWithEmailAndPassword(email, password).await()
     }
 
+    override suspend fun createAccount(email: String, password: String): FirebaseUser {
+        return auth.createUserWithEmailAndPassword(email, password).await().user
+            ?: error("Firebase did not return the new account")
+    }
+
     override suspend fun signOut() {
         auth.signOut()
     }
@@ -46,6 +53,7 @@ interface FirestoreRepository {
     fun observeUser(uid: String): Flow<DalUser?>
     fun observeMeetings(): Flow<List<DalMeeting>>
     fun observeResources(): Flow<List<DalResource>>
+    suspend fun createFacultyProfile(user: FirebaseUser, displayName: String)
     suspend fun saveMeeting(meeting: DalMeeting)
     suspend fun saveResource(resource: DalResource)
 }
@@ -59,7 +67,7 @@ class FirebaseFirestoreRepository(
                 close(error)
                 return@addSnapshotListener
             }
-            val user = snapshot?.toObject(DalUser::class.java)
+            val user = snapshot?.toDalUser(uid)
             trySend(user)
         }
         awaitClose { listener.remove() }
@@ -97,18 +105,85 @@ class FirebaseFirestoreRepository(
         awaitClose { listener.remove() }
     }
 
+    override suspend fun createFacultyProfile(user: FirebaseUser, displayName: String) {
+        val name = displayName.trim().ifBlank { user.email.orEmpty() }
+        val username = name.lowercase().replace(Regex("[^a-z0-9]+"), "-").trim('-')
+            .ifBlank { "faculty-${user.uid.take(8)}" }
+        firestore.collection("users").document(user.uid).set(
+            mapOf(
+                "uid" to user.uid,
+                "username" to username,
+                "usernameLower" to username.lowercase(),
+                "email" to user.email.orEmpty(),
+                "name" to name,
+                "fullName" to name,
+                "role" to "faculty",
+                "user_status" to "ACTIVE",
+                "institution" to "Dalhousie Ghana College of Psychiatrists",
+                "contactNumber" to "",
+                "mainTopics" to emptyList<String>(),
+                "tutorials" to emptyList<String>(),
+                "revision" to 1L,
+                "createdAt" to FieldValue.serverTimestamp(),
+                "updatedAt" to FieldValue.serverTimestamp()
+            )
+        ).await()
+    }
+
     override suspend fun saveMeeting(meeting: DalMeeting) {
         val ref = firestore.collection("meetings").document(meeting.id.ifEmpty { firestore.collection("meetings").document().id })
-        ref.set(meeting.copy(id = ref.id, revision = meeting.revision + 1)).await()
+        firestore.runTransaction { transaction ->
+            val current = transaction.get(ref)
+            val revision = (current.getLong("revision") ?: 0L) + 1L
+            val actorId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
+            transaction.set(ref, mapOf(
+                "id" to ref.id,
+                "title" to meeting.title,
+                "scheduledAt" to meeting.scheduledAt,
+                "revision" to revision,
+                "createdBy" to (current.getString("createdBy") ?: actorId),
+                "updatedBy" to actorId,
+                "createdAt" to (current.get("createdAt") ?: FieldValue.serverTimestamp()),
+                "updatedAt" to FieldValue.serverTimestamp()
+            ))
+        }.await()
     }
 
     override suspend fun saveResource(resource: DalResource) {
         val ref = firestore.collection("resources").document(resource.id.ifEmpty { firestore.collection("resources").document().id })
-        ref.set(resource.copy(id = ref.id, revision = resource.revision + 1)).await()
+        firestore.runTransaction { transaction ->
+            val current = transaction.get(ref)
+            val revision = (current.getLong("revision") ?: 0L) + 1L
+            val actorId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
+            transaction.set(ref, mapOf(
+                "id" to ref.id,
+                "title" to resource.title,
+                "storagePath" to resource.storagePath,
+                "downloadUrl" to resource.downloadUrl,
+                "revision" to revision,
+                "createdBy" to (current.getString("createdBy") ?: actorId),
+                "updatedBy" to actorId,
+                "createdAt" to (current.get("createdAt") ?: FieldValue.serverTimestamp()),
+                "updatedAt" to FieldValue.serverTimestamp()
+            ))
+        }.await()
     }
 
-    private fun QueryDocumentSnapshot.toDalMeeting(): DalMeeting? = toObject(DalMeeting::class.java)?.copy(id = id)
-    private fun QueryDocumentSnapshot.toDalResource(): DalResource? = toObject(DalResource::class.java)?.copy(id = id)
+    private fun DocumentSnapshot.toDalUser(uid: String): DalUser? {
+        if (!exists()) return null
+        return DalUser(
+            uid = getString("uid") ?: uid,
+            displayName = getString("name")
+                ?: getString("fullName")
+                ?: getString("username")
+                ?: getString("email").orEmpty(),
+            email = getString("email").orEmpty(),
+            role = getString("role") ?: "faculty"
+        )
+    }
+
+    private fun DocumentSnapshot.toDalMeeting(): DalMeeting? = toObject(DalMeeting::class.java)?.copy(id = id)
+    private fun DocumentSnapshot.toDalResource(): DalResource? = toObject(DalResource::class.java)?.copy(id = id)
 }
 
 interface StorageRepository {

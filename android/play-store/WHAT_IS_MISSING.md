@@ -14,6 +14,16 @@ You can open the project and prepare everything now, but the last build/release 
 - a real upload keystore and signing properties
 - Android Studio or a local Gradle environment to generate the signed AAB
 
+The Android source is now wired for:
+
+- Firebase email/password sign-in
+- New faculty account creation with a Firestore profile
+- Real-time meetings and resources listeners
+- Firestore transaction-based revision increments
+- Firebase Storage uploads restricted to administrators
+- Firebase Cloud Messaging token registration
+- Release build configuration with minification and signing placeholders
+
 ## Exact next actions
 
 1. In Firebase Console, register `com.dalhousie.app` as an Android app.
@@ -32,4 +42,3 @@ I can still help you with any of these right now:
 - draft the keystore values and file format
 - draft the Play Console internal testing release notes
 - review your Android Studio build error if you paste it here
-

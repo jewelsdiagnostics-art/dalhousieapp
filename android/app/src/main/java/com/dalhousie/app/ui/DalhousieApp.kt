@@ -83,7 +83,8 @@ fun DalhousieApp(
                 modifier = Modifier.padding(innerPadding),
                 isSigningIn = uiState.isAuthenticating,
                 errorMessage = uiState.authError,
-                onSignIn = viewModel::signIn
+                onSignIn = viewModel::signIn,
+                onCreateAccount = viewModel::createAccount
             )
 
             AppRoute.Home.route -> HomeScreen(
@@ -117,8 +118,11 @@ private fun LoginScreen(
     modifier: Modifier = Modifier,
     isSigningIn: Boolean,
     errorMessage: String?,
-    onSignIn: (String, String) -> Unit
+    onSignIn: (String, String) -> Unit,
+    onCreateAccount: (String, String, String) -> Unit
 ) {
+    var createMode by rememberSaveable { mutableStateOf(false) }
+    var displayName by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
 
@@ -126,8 +130,18 @@ private fun LoginScreen(
         modifier = modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Sign in", style = MaterialTheme.typography.headlineMedium)
-        Text("Use the same Firebase account that also exists in the web portal.")
+        Text(if (createMode) "Create faculty account" else "Sign in", style = MaterialTheme.typography.headlineMedium)
+        Text(if (createMode) "Create an account for the Dalhousie companion app." else "Use the same Firebase account that also exists in the web portal.")
+
+        if (createMode) {
+            OutlinedTextField(
+                value = displayName,
+                onValueChange = { displayName = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Full name") },
+                singleLine = true
+            )
+        }
 
         OutlinedTextField(
             value = email,
@@ -146,15 +160,22 @@ private fun LoginScreen(
         )
 
         Button(
-            onClick = { onSignIn(email, password) },
-            enabled = !isSigningIn && email.isNotBlank() && password.isNotBlank()
+            onClick = {
+                if (createMode) onCreateAccount(displayName, email, password)
+                else onSignIn(email, password)
+            },
+            enabled = !isSigningIn && email.isNotBlank() && password.length >= 6 && (!createMode || displayName.isNotBlank())
         ) {
             if (isSigningIn) {
                 CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.padding(end = 8.dp))
                 Text("Signing in")
             } else {
-                Text("Continue")
+                Text(if (createMode) "Create account" else "Continue")
             }
+        }
+
+        TextButton(onClick = { createMode = !createMode }) {
+            Text(if (createMode) "Already have an account? Sign in" else "Create a new faculty account")
         }
 
         if (!errorMessage.isNullOrBlank()) {
@@ -253,7 +274,7 @@ private fun ResourcesScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text("Resources", style = MaterialTheme.typography.headlineMedium)
-        Text("Upload files to Firebase Storage and save metadata in Firestore.")
+        Text("Administrators can upload files to Firebase Storage and save metadata in Firestore.")
 
         OutlinedTextField(
             value = title,

@@ -92,6 +92,15 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    match /users/{userId}/deviceTokens/{tokenId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId)
+        && request.resource.data.token == tokenId
+        && request.resource.data.platform == "android"
+        && request.resource.data.keys().hasOnly(["token", "platform", "updatedAt"]);
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
     match /resourceDeletions/{resourceId} {
       allow read: if isSignedIn();
 

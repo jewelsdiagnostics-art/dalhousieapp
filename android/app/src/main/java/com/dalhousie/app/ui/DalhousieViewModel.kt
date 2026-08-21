@@ -96,6 +96,23 @@ class DalhousieViewModel(
         }
     }
 
+    fun createAccount(displayName: String, email: String, password: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isAuthenticating = true, authError = null) }
+            runCatching {
+                val user = authRepository.createAccount(email.trim(), password)
+                firestoreRepository.createFacultyProfile(user, displayName)
+            }.onFailure { error ->
+                _uiState.update {
+                    it.copy(
+                        isAuthenticating = false,
+                        authError = error.message ?: "Account creation failed"
+                    )
+                }
+            }
+        }
+    }
+
     fun signOut() {
         viewModelScope.launch {
             authRepository.signOut()
@@ -110,6 +127,10 @@ class DalhousieViewModel(
 
     fun uploadResource(title: String, remotePath: String, localUri: Uri) {
         viewModelScope.launch {
+            if (_uiState.value.profile?.role != "admin") {
+                _uiState.update { it.copy(uploadStatus = "Only administrators can upload resources.") }
+                return@launch
+            }
             _uiState.update { it.copy(uploadStatus = "Uploading...") }
             runCatching {
                 val safePath = normalizeRemotePath(remotePath, title)
