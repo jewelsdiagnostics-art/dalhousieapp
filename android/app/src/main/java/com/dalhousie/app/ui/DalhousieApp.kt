@@ -1,6 +1,7 @@
 package com.dalhousie.app.ui
 
 import android.net.Uri
+import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -22,8 +23,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -156,6 +158,7 @@ private fun LoginScreen(
             onValueChange = { password = it },
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Password") },
+            visualTransformation = PasswordVisualTransformation(),
             singleLine = true
         )
 
@@ -260,6 +263,7 @@ private fun ResourcesScreen(
     uiState: DalhousieUiState,
     onUpload: (String, String, Uri) -> Unit
 ) {
+    val context = LocalContext.current
     var title by rememberSaveable { mutableStateOf("") }
     var remotePath by rememberSaveable { mutableStateOf("") }
     var pickedUri by remember { mutableStateOf<Uri?>(null) }
@@ -317,7 +321,18 @@ private fun ResourcesScreen(
                     Text("No resources uploaded yet.")
                 } else {
                     uiState.resources.forEach { resource ->
-                        Text("• ${resource.title} -> ${resource.downloadUrl.ifBlank { resource.storagePath }}")
+                        val downloadUrl = resource.downloadUrl
+                        if (downloadUrl.isBlank()) {
+                            Text(resource.title.ifBlank { resource.id })
+                        } else {
+                            TextButton(
+                                onClick = {
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(downloadUrl)))
+                                }
+                            ) {
+                                Text("Download: ${resource.title.ifBlank { resource.id }}")
+                            }
+                        }
                     }
                 }
             }
