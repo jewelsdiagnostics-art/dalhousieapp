@@ -327,7 +327,12 @@ private fun ResourcesScreen(
                         } else {
                             TextButton(
                                 onClick = {
-                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(downloadUrl)))
+                                    runCatching {
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(downloadUrl))
+                                        if (intent.resolveActivity(context.packageManager) != null) {
+                                            context.startActivity(intent)
+                                        }
+                                    }
                                 }
                             ) {
                                 Text("Download: ${resource.title.ifBlank { resource.id }}")

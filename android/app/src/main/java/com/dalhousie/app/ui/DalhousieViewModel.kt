@@ -16,8 +16,10 @@ import com.dalhousie.app.data.StorageRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 data class DalhousieUiState(
@@ -42,7 +44,6 @@ class DalhousieViewModel(
 
     init {
         observeAuth()
-        observeCollections()
     }
 
     private fun observeAuth() {
@@ -50,16 +51,44 @@ class DalhousieViewModel(
             authRepository.authState().collectLatest { user ->
                 if (user == null) {
                     _uiState.update {
-                        it.copy(profile = null, isAuthenticating = false, authError = null)
+                        DalhousieUiState(
+                            isAuthenticating = false,
+                            authError = it.authError
+                        )
                     }
                 } else {
-                    firestoreRepository.observeUser(user.uid).collectLatest { profile ->
-                        _uiState.update {
-                            it.copy(
-                                profile = profile ?: DalUser(uid = user.uid, displayName = user.email.orEmpty(), email = user.email.orEmpty(), role = "faculty"),
-                                isAuthenticating = false,
-                                authError = null
-                            )
+                    val fallbackProfile = DalUser(
+                        uid = user.uid,
+                        displayName = user.displayName ?: user.email.orEmpty(),
+                        email = user.email.orEmpty(),
+                        role = "faculty"
+                    )
+                    _uiState.update {
+                        it.copy(profile = fallbackProfile, isAuthenticating = false, authError = null)
+                    }
+
+                    // Firestore rules reject anonymous reads, so listeners only run for signed-in users.
+                    coroutineScope {
+                        launch {
+                            firestoreRepository.observeUser(user.uid)
+                                .catch { error -> showSyncError(error) }
+                                .collectLatest { profile ->
+                                    _uiState.update { it.copy(profile = profile ?: fallbackProfile) }
+                                }
+                        }
+                        launch {
+                            firestoreRepository.observeMeetings()
+                                .catch { error -> showSyncError(error) }
+                                .collectLatest { meetings ->
+                                    _uiState.update { it.copy(meetings = meetings) }
+                                }
+                        }
+                        launch {
+                            firestoreRepository.observeResources()
+                                .catch { error -> showSyncError(error) }
+                                .collectLatest { resources ->
+                                    _uiState.update { it.copy(resources = resources) }
+                                }
                         }
                     }
                 }
@@ -67,16 +96,9 @@ class DalhousieViewModel(
         }
     }
 
-    private fun observeCollections() {
-        viewModelScope.launch {
-            firestoreRepository.observeMeetings().collectLatest { meetings ->
-                _uiState.update { it.copy(meetings = meetings) }
-            }
-        }
-        viewModelScope.launch {
-            firestoreRepository.observeResources().collectLatest { resources ->
-                _uiState.update { it.copy(resources = resources) }
-            }
+    private fun showSyncError(error: Throwable) {
+        _uiState.update {
+            it.copy(authError = error.message ?: "Data could not be synchronized right now.")
         }
     }
 
