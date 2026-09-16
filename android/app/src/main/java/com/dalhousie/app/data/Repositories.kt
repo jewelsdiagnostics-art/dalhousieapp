@@ -4,7 +4,6 @@ import android.net.Uri
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
@@ -67,8 +66,9 @@ class FirebaseFirestoreRepository(
                 close(error)
                 return@addSnapshotListener
             }
-            val user = snapshot?.toDalUser(uid)
-            trySend(user)
+            runCatching { mapDalUser(uid, snapshot?.data) }
+                .onSuccess { user -> trySend(user) }
+                .onFailure { mappingError -> close(mappingError) }
         }
         awaitClose { listener.remove() }
     }
@@ -79,12 +79,16 @@ class FirebaseFirestoreRepository(
                 close(error)
                 return@addSnapshotListener
             }
-            val meetings = snapshot
-                ?.documents
-                ?.mapNotNull { doc -> doc.toDalMeeting() }
-                ?.sortedByDescending { it.revision }
-                .orEmpty()
-            trySend(meetings)
+            runCatching {
+                snapshot?.documents
+                    ?.mapNotNull { doc -> mapDalMeeting(doc.id, doc.data) }
+                    ?.sortedByDescending { it.revision }
+                    .orEmpty()
+            }.onSuccess { meetings ->
+                trySend(meetings)
+            }.onFailure { mappingError ->
+                close(mappingError)
+            }
         }
         awaitClose { listener.remove() }
     }
@@ -95,12 +99,16 @@ class FirebaseFirestoreRepository(
                 close(error)
                 return@addSnapshotListener
             }
-            val resources = snapshot
-                ?.documents
-                ?.mapNotNull { doc -> doc.toDalResource() }
-                ?.sortedByDescending { it.revision }
-                .orEmpty()
-            trySend(resources)
+            runCatching {
+                snapshot?.documents
+                    ?.mapNotNull { doc -> mapDalResource(doc.id, doc.data) }
+                    ?.sortedByDescending { it.revision }
+                    .orEmpty()
+            }.onSuccess { resources ->
+                trySend(resources)
+            }.onFailure { mappingError ->
+                close(mappingError)
+            }
         }
         awaitClose { listener.remove() }
     }
@@ -169,21 +177,6 @@ class FirebaseFirestoreRepository(
         }.await()
     }
 
-    private fun DocumentSnapshot.toDalUser(uid: String): DalUser? {
-        if (!exists()) return null
-        return DalUser(
-            uid = getString("uid") ?: uid,
-            displayName = getString("name")
-                ?: getString("fullName")
-                ?: getString("username")
-                ?: getString("email").orEmpty(),
-            email = getString("email").orEmpty(),
-            role = getString("role") ?: "faculty"
-        )
-    }
-
-    private fun DocumentSnapshot.toDalMeeting(): DalMeeting? = toObject(DalMeeting::class.java)?.copy(id = id)
-    private fun DocumentSnapshot.toDalResource(): DalResource? = toObject(DalResource::class.java)?.copy(id = id)
 }
 
 interface StorageRepository {
